@@ -1,0 +1,90 @@
+.stat-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-card-title {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.stat-card-icon-wrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-card-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.stat-card-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.025em;
+  font-family: var(--font-sans);
+  line-height: 1.1;
+}
+
+.stat-card-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background-color: var(--primary-light);
+  color: var(--primary);
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--primary-border);
+}
+
+.stat-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+.stat-card-trend {
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+}
+
+.trend-positive {
+  color: var(--success);
+}
+
+.trend-negative {
+  color: var(--danger);
+}
+
+.trend-live {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.trend-neutral {
+  color: var(--text-secondary);
+}
+
+.stat-card-subvalue {
+  color: var(--text-muted);
+}
