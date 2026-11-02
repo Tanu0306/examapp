@@ -1,0 +1,52 @@
+/* Evaluation Page Styling */
+
+.evaluation-page {
+  padding: var(--spacing-4);
+}
+
+.evaluation-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--spacing-3);
+}
+
+.evaluation-table th,
+.evaluation-table td {
+  padding: var(--spacing-2);
+  text-align: left;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.evaluation-table th {
+  background-color: var(--bg-surface);
+  font-weight: var(--font-weight-medium);
+}
+
+.detail-panel {
+  margin-top: var(--spacing-4);
+  padding: var(--spacing-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+}
+
+.detail-panel h3 {
+  margin-bottom: var(--spacing-2);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+}
+
+.detail-panel .form-group {
+  margin-bottom: var(--spacing-3);
+}
+
+.detail-actions {
+  display: flex;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-3);
+}
+
+.published {
+  background-color: var(--bg-muted);
+}

@@ -1,0 +1,69 @@
+/* AllExamsPage styling */
+
+/* Controls header */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-4);
+}
+
+/* Search input takes flexible width */
+.controls .form-input {
+  flex: 1 1 200px;
+}
+
+/* Status filter button group */
+.status-filters {
+  display: flex;
+  gap: var(--spacing-1);
+}
+
+/* Align Create button to the right on larger screens */
+.controls > .btn-primary {
+  margin-left: auto;
+}
+
+/* Table styling */
+.exam-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--spacing-3);
+}
+
+.exam-table th,
+.exam-table td {
+  padding: var(--spacing-2);
+  text-align: left;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.exam-table th {
+  background-color: var(--bg-surface);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Action buttons cell */
+.action-cell .btn {
+  margin-right: var(--spacing-1);
+}
+
+/* No results message */
+.no-results {
+  margin-top: var(--spacing-4);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* Responsive: stack controls on narrow screens */
+@media (max-width: 640px) {
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .controls > .btn-primary {
+    margin-left: 0;
+  }
+}

@@ -1,0 +1,63 @@
+/* Student Roster Page Styling */
+
+.roster-page {
+  padding: var(--spacing-4);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-3);
+  align-items: center;
+}
+
+.roster-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.roster-table th,
+.roster-table td {
+  padding: var(--spacing-2);
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--font-size-sm);
+}
+
+.roster-table th {
+  background-color: var(--bg-surface);
+  font-weight: var(--font-weight-medium);
+}
+
+.action-cell {
+  display: flex;
+  gap: var(--spacing-1);
+}
+
+.edit-panel,
+.add-panel {
+  margin-top: var(--spacing-4);
+  padding: var(--spacing-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+}
+
+.detail-actions {
+  display: flex;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-3);
+}
+
+.file-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.editing {
+  background-color: var(--bg-muted);
+}

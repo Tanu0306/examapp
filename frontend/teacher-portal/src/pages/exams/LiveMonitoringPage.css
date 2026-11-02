@@ -1,0 +1,106 @@
+/* Live Monitoring Page Styling */
+
+/* Page container */
+.live-monitoring-page {
+  padding: var(--spacing-4);
+}
+
+/* Exam selector spacing */
+.live-monitoring-page .exam-select {
+  margin-bottom: var(--spacing-4);
+}
+
+/* Students table */
+.students-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--spacing-3);
+}
+
+.students-table th,
+.students-table td {
+  padding: var(--spacing-2);
+  text-align: left;
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.students-table th {
+  background-color: var(--bg-surface);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Row status colors */
+.students-table tr.connected td {
+  background-color: var(--bg-surface);
+}
+
+.students-table tr.disconnected td {
+  background-color: var(--bg-muted);
+  color: var(--text-muted);
+}
+
+/* Action buttons spacing */
+.students-table .action-cell .btn {
+  margin-right: var(--spacing-1);
+}
+
+/* Announcement panel */
+.announcement-panel {
+  margin-top: var(--spacing-4);
+  padding: var(--spacing-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+}
+
+.announcement-panel h3 {
+  margin-bottom: var(--spacing-2);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+}
+
+.announcement-actions {
+  display: flex;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-2);
+}
+
+/* Log area */
+.log-area {
+  margin-top: var(--spacing-4);
+  padding: var(--spacing-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+}
+
+.log-area h3 {
+  margin-bottom: var(--spacing-2);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Responsive: stack table on small screens */
+@media (max-width: 640px) {
+  .students-table thead {
+    display: none;
+  }
+  .students-table tr {
+    display: block;
+    margin-bottom: var(--spacing-3);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+  }
+  .students-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-2);
+  }
+  .students-table td::before {
+    content: attr(data-label);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+  }
+}
+
