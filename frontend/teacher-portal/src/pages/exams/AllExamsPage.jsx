@@ -48,6 +48,7 @@ export const AllExamsPage = () => {
           placeholder="Search exams..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          className="exam-search-input"
         />
         <div className="status-filters">
           {['all', 'ongoing', 'scheduled', 'draft', 'completed'].map((st) => (

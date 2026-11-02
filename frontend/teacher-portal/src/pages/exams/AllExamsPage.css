@@ -10,8 +10,10 @@
 }
 
 /* Search input takes flexible width */
-.controls .form-input {
-  flex: 1 1 200px;
+.exam-search-input .form-input {
+  height: 30px !important;
+  padding: 0 8px;
+  box-sizing: border-box;
 }
 
 /* Status filter button group */
@@ -21,7 +23,7 @@
 }
 
 /* Align Create button to the right on larger screens */
-.controls > .btn-primary {
+.controls>.btn-primary {
   margin-left: auto;
 }
 
@@ -63,7 +65,8 @@
     flex-direction: column;
     align-items: stretch;
   }
-  .controls > .btn-primary {
+
+  .controls>.btn-primary {
     margin-left: 0;
   }
 }
