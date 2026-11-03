@@ -4,5 +4,15 @@ import { defineConfig } from 'vite';
 // Vite configuration for teacher-portal
 export default defineConfig({
   plugins: [react()],
-  // No server proxy needed for local UI testing
+  server:{
+    proxy:{
+      "/api":{
+        target:'http://localhost:3000',
+        changeOrigin:true,
+        secure:false
+      }
+    }
+  }
+
+
 });

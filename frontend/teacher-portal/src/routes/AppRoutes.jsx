@@ -108,7 +108,6 @@ export const AppRoutes = () => {
           path="students"
           element={<StudentRosterPage />}
         />
-
         {/* Phase 6: Settings */}
         <Route
           path="settings"
