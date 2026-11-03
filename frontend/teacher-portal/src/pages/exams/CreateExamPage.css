@@ -1,28 +1,48 @@
-
 .checkbox-label {
-  font-size: 0.8125rem; /* match question bank label font */
-  font-weight: 500;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* New Question input fields – compact size */
-.section-new-questions .input-control {
-  height: 32px;
   font-size: 0.8125rem;
-}
-
-  font-size: 0.875em;
+  /* match question bank label font */
   font-weight: 500;
   color: var(--text-primary);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
+/* Align new question inputs left (outer container) */
+.section-new-questions>.form-group {
+  display: flex;
+  align-items: left;
+  gap: var(--spacing-2);
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
 
+/* Wider title input */
+.title-input {
+  display: inline-block;
+  width: 440px;
+  margin-right: var(--spacing-2);
+}
+
+/* Small input for marks */
+.small-input {
+  display: inline-block;
+  width: 200px;
+  margin-right: var(--spacing-2);
+}
+
+/* Ensure inner inputs fill container */
+.title-input .form-input,
+.small-input .form-input {
+  width: 100%;
+}
+
+/* Increase width of Add Question button a little */
+.section-new-questions .form-group button {
+  max-width: 150px;
+  /* increased from 120px */
+  width: auto;
+}
 
 /* Question list styling */
 .question-list ul {
@@ -69,101 +89,7 @@
   margin-top: var(--spacing-4);
 }
 
-/* Align Save Draft and Cancel buttons size */
 .form-actions .btn-sm {
-  height: 32px; /* keep consistent small button height */
-}
-
-.question-list ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.question-list li {
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border-color, #e0e0e0);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.question-list .remove-btn {
-  background: none;
-  border: none;
-  color: var(--danger-color, #d32f2f);
-  cursor: pointer;
-  font-size: 1.2rem;
-}
-
-/* Question list styling */
-.question-list ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.question-list li {
-  padding: var(--spacing-2) 0;
-  border-bottom: 1px solid var(--border-subtle);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.question-list .remove-btn {
-  background: none;
-  border: none;
-  color: var(--danger);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-}
-
-/* Form groups spacing */
-.form-group {
-  margin-bottom: var(--spacing-3);
-}
-
-/* Section headings */
-.section-metadata h3,
-.section-lab h3,
-.section-security h3,
-.section-new-questions h3 {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-medium);
-  margin-bottom: var(--spacing-2);
-}
-
-/* Buttons arrangement */
-.form-actions {
-  display: flex;
-  gap: var(--spacing-2);
-  margin-top: var(--spacing-4);
-}
-
-/* Align Save Draft and Cancel buttons size */
-.form-actions .btn-sm {
-  height: 32px; /* keep consistent small button height */
-}
-
-.question-list ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.question-list li {
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border-color, #e0e0e0);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.question-list .remove-btn {
-  background: none;
-  border: none;
-  color: var(--danger-color, #d32f2f);
-  cursor: pointer;
-  font-size: 1.2rem;
+  height: 32px;
+  /* keep consistent small button height */
 }

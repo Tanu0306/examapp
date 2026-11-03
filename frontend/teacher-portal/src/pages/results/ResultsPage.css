@@ -30,7 +30,7 @@
 
 /* Compact search input */
 .search-input {
-  height: 36px; /* reduced height for compact look */
+  height: 30px; /* further reduced height for compact look */
   width: 200px;
   padding: 0 8px;
   border: 1px solid var(--border-subtle);

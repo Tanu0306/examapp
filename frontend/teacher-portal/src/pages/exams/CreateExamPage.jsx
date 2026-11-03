@@ -6,6 +6,7 @@ import { Select } from '../../components/common/Select';
 import { CheckIcon, XIcon } from '../../components/common/Icons';
 
 import { toast } from '../../utils/toast'; // we'll create a simple toast util later
+
 import './CreateExamPage.css';
 
 // Mock data for labs – in a real app this would come from the backend
@@ -128,8 +129,8 @@ export const CreateExamPage = () => {
       <section className="section-new-questions">
         <h3>Add Questions Directly</h3>
         <div className="form-group">
-          <Input label="Question Title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} required />
-          <Input label="Marks" type="number" min={1} value={newMarks} onChange={(e) => setNewMarks(Number(e.target.value))} required />
+          <Input label="Question" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} required className="title-input" />
+          <Input label="Marks" type="number" min={1} value={newMarks} onChange={(e) => setNewMarks(Number(e.target.value))} required className="small-input" />
           <Button variant="primary" onClick={() => {
             if (newTitle.trim() && newMarks > 0) {
               const newQ = { id: Date.now().toString(), title: newTitle.trim(), marks: newMarks };
