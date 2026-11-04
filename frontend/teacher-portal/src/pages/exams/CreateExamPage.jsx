@@ -27,6 +27,27 @@ const DateTimePicker = ({ label, value, onChange }) => (
 export const CreateExamPage = () => {
   const navigate = useNavigate();
   // Removed question bank selection – teachers will create questions directly
+  // ── Placeholder for future Question Bank integration ──
+  // When the /api/questions endpoint becomes available, uncomment the code below
+  // and adjust as needed to fetch and select existing questions.
+  // -------------------------------------------------------------------
+  // const [questionBank, setQuestionBank] = useState([]);
+  // const [selectedQuestionIds, setSelectedQuestionIds] = useState([]);
+  //
+  // // Fetch question bank from backend API
+  // useEffect(() => {
+  //   fetch('/api/questions')
+  //     .then((res) => res.json())
+  //     .then((data) => setQuestionBank(data))
+  //     .catch((err) => console.error('Failed to load question bank:', err));
+  // }, []);
+  //
+  // const toggleQuestion = (id) => {
+  //   setSelectedQuestionIds((prev) =>
+  //     prev.includes(id) ? prev.filter((qid) => qid !== id) : [...prev, id]
+  //   );
+  // };
+  // -------------------------------------------------------------------
 
   // Basic exam metadata
   const [title, setTitle] = useState('');
@@ -44,7 +65,36 @@ export const CreateExamPage = () => {
   const [lab, setLab] = useState('');
   const [batch, setBatch] = useState('');
 
-  // Security settings (simple checkboxes)
+  // State for optional Question Bank integration (future API)
+  const [useQuestionBank, setUseQuestionBank] = useState(false);
+  const [selectedBankQuestionIds, setSelectedBankQuestionIds] = useState([]);
+
+  // Mock question bank data – replace with API call when /api/questions is available
+  const mockQuestionBank = [
+    { id: 'qb1', title: 'What is the capital of France?' },
+    { id: 'qb2', title: 'Explain Newton’s second law.' },
+    { id: 'qb3', title: 'Define photosynthesis.' },
+  ];
+
+  // Toggle question selection from the mock bank
+  const toggleBankQuestion = (id) => {
+    setSelectedBankQuestionIds((prev) =>
+      prev.includes(id) ? prev.filter((qid) => qid !== id) : [...prev, id]
+    );
+  };
+
+  // When a bank question is selected, add it to the newQuestions list
+  const addBankQuestions = () => {
+    const selected = mockQuestionBank.filter((q) => selectedBankQuestionIds.includes(q.id));
+    const added = selected.map((q) => ({ id: Date.now().toString() + q.id, title: q.title, marks: 1 }));
+    setNewQuestions((prev) => [...prev, ...added]);
+    setSelectedBankQuestionIds([]);
+    setUseQuestionBank(false);
+    toast.success('Question(s) added from bank');
+  };
+
+  // UI for Question Bank toggle – placed after security settings
+
   const [allowTabSwitch, setAllowTabSwitch] = useState(false);
   const [enableAudioMonitor, setEnableAudioMonitor] = useState(false);
 

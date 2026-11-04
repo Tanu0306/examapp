@@ -238,6 +238,53 @@
   color: var(--text-secondary);
 }
 
+/* Folder Toolbar */
+.folder-toolbar {
+  margin-bottom: 16px;
+}
+
+.folder-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.folder-card {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-surface);
+  padding: 12px 16px;
+  min-width: 200px;
+  flex: 1 1 200px;
+  cursor: pointer;
+  position: relative;
+}
+
+.folder-card:hover {
+  border-color: var(--primary);
+}
+
+.folder-card-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+}
+
+.folder-action-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.folder-action-btn:hover {
+  color: var(--text-primary);
+}
+
 /* 4. Table */
 .questions-table-wrap {
   background-color: var(--bg-surface);
@@ -1108,3 +1155,377 @@
   }
 }
 
+
+/* ── Folder Section ──────────────────────────────────────────────────────── */
+.folder-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.folder-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.folder-section-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.folder-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.folder-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  text-align: center;
+}
+
+/* ── Unassigned Section ──────────────────────────────────────────────────── */
+.unassigned-section {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.unassigned-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.unassigned-badge {
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 1px 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.unassigned-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ── Folder Detail View ──────────────────────────────────────────────────── */
+.folder-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.folder-view-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.folder-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.folder-back-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.folder-view-title-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.folder-view-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ── Folder tag in search results ────────────────────────────────────────── */
+.folder-tag {
+  display: inline-block;
+  background: var(--primary-light, #ede9fe);
+  color: var(--primary);
+  border: 1px solid var(--primary-border, #c4b5fd);
+  border-radius: var(--radius-xs);
+  padding: 2px 7px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+/* ── MCQ Authoring Modal ─────────────────────────────────────────────────── */
+.authoring-dialog {
+  max-width: 640px;
+  width: 95%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.authoring-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-row-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-input {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+}
+
+.form-textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.form-textarea:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+}
+
+.req { color: var(--danger); }
+
+.auth-form-error {
+  background: var(--danger-light);
+  border: 1px solid var(--danger-border);
+  color: var(--danger-text);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+}
+
+/* Options */
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.option-radio {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.option-label-letter {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 16px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.option-text-input {
+  flex: 1;
+}
+
+.option-remove-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-xs);
+  flex-shrink: 0;
+}
+
+.option-remove-btn:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.add-option-btn {
+  background: transparent;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--primary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: 6px 12px;
+  margin-top: 4px;
+  text-align: left;
+  transition: all var(--transition-fast);
+}
+
+.add-option-btn:hover {
+  border-color: var(--primary);
+  background: var(--primary-light, #ede9fe);
+}
+
+/* ── Add Existing Questions Modal ────────────────────────────────────────── */
+.add-existing-dialog {
+  max-width: 640px;
+  width: 95%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.add-existing-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.add-existing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.add-existing-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: var(--bg-surface);
+}
+
+.add-existing-item:hover {
+  border-color: var(--primary);
+  background: var(--bg-surface-hover);
+}
+
+.add-existing-item.selected {
+  border-color: var(--primary);
+  background: var(--primary-light, #ede9fe);
+}
+
+.add-existing-checkbox {
+  margin-top: 2px;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.add-existing-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.add-existing-title {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.add-existing-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* warning icon color for remove-from-folder button */
+.q-icon-btn.text-warning:hover {
+  background-color: var(--warning-light);
+  color: var(--warning-text);
+}

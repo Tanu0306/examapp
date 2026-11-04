@@ -1,0 +1,29 @@
+/* StatusBadge.css */
+.status-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-online {
+  background-color: #d4edda; /* light green */
+  color: #155724;        /* dark green */
+}
+
+.badge-offline {
+  background-color: #fff3cd; /* light amber */
+  color: #856404;        /* dark amber */
+}
+
+.badge-never {
+  background-color: #e2e3e5; /* light grey */
+  color: #6c757d;        /* dark grey */
+}
+
+.badge-neutral {
+  background-color: #f8f9fa;
+  color: #212529;
+}
+

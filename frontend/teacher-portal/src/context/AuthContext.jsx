@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('examlan_teacher_auth');
-      return saved ? JSON.parse(saved) : null;
+      return saved ? JSON.parse(saved) : DEMO_TEACHER;
     } catch {
       return null;
     }
