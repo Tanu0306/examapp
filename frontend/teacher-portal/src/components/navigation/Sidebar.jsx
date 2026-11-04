@@ -6,7 +6,7 @@ import {
   PlusCircleIcon,
   ExamIcon,
   MonitoringIcon,
-  EvaluationIcon,
+
   ResultsIcon,
   StudentsIcon,
   SettingsIcon,
@@ -25,7 +25,7 @@ const NAV_ITEMS = [
   { label: 'Create Exam', path: '/exams/create', icon: PlusCircleIcon, badge: 'New' },
   { label: 'All Examinations', path: '/exams', icon: ExamIcon },
   { label: 'Live Monitoring', path: '/monitoring', icon: MonitoringIcon, livePulse: true },
-  { label: 'Evaluation', path: '/evaluation', icon: EvaluationIcon },
+
   { label: 'Results & Reports', path: '/results', icon: ResultsIcon },
   { label: 'Student Roster', path: '/students', icon: StudentsIcon },
   { label: 'Settings & Lab', path: '/settings', icon: SettingsIcon },

@@ -1,3 +1,4 @@
+// src/routes/AppRoutes.jsx
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -8,115 +9,110 @@ import { QuestionsPage } from '../pages/questions/QuestionsPage';
 import { CreateExamPage } from '../pages/exams/CreateExamPage';
 import { AllExamsPage } from '../pages/exams/AllExamsPage';
 import { LiveMonitoringPage } from '../pages/exams/LiveMonitoringPage';
-import { EvaluationPage } from '../pages/evaluation/EvaluationPage';
 import { ResultsPage } from '../pages/results/ResultsPage';
 import { StudentRosterPage } from '../pages/roster/StudentRosterPage';
 import { SettingsPage } from '../pages/settings/SettingsPage';
+import { QuestionBankProvider } from '../context/QuestionBankContext';
 
+// Optional – only if these pages actually exist.
+// import { ExamListPage } from '../pages/results/ExamListPage';
+// import { ExamResultsPage } from '../pages/results/ExamResultsPage';
+// import { StudentResultPage } from '../pages/results/StudentResultPage';
+// import { AnswerReviewPage } from '../pages/results/AnswerReviewPage';
 
+/* -------------------------------------------------------------------------- */
+/*  Route guards                                                               */
+/* -------------------------------------------------------------------------- */
 
-// Protected Route Guard
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
 
   if (!isAuthenticated) {
+    // Redirect unauthenticated users to the login page
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;
 };
 
-// Public Route Guard (prevents visiting login if already logged in)
 const PublicRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
+
   if (isAuthenticated) {
+    // If already logged in, prevent access to login / register pages
     return <Navigate to="/" replace />;
   }
+
   return children;
 };
 
+/* -------------------------------------------------------------------------- */
+/*  Main routing tree                                                          */
+/* -------------------------------------------------------------------------- */
+
 export const AppRoutes = () => {
   return (
-    <Routes>
-      {/* Public Auth Routes */}
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <AuthPage initialMode="login" />
-          </PublicRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <PublicRoute>
-            <AuthPage initialMode="register" />
-          </PublicRoute>
-        }
-      />
-
-      {/* Protected Teacher Portal App Routes */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <MainLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<DashboardPage />} />
-
-        {/* Phase 2: Question Bank */}
+    <QuestionBankProvider>
+      <Routes>
+        {/* Public Auth Routes */}
         <Route
-          path="questions"
-          element={<QuestionsPage />}
+          path="/login"
+          element={
+            <PublicRoute>
+              <AuthPage initialMode="login" />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <AuthPage initialMode="register" />
+            </PublicRoute>
+          }
         />
 
-        {/* Phase 3: Examinations */}
+        {/* Protected Teacher‑Portal Routes */}
         <Route
-          path="exams"
-          element={<AllExamsPage />}
-        />
+          path="/"
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
+          {/* Dashboard */}
+          <Route index element={<DashboardPage />} />
 
-        <Route
-          path="exams/create"
-          element={<CreateExamPage />}
-        />
+          {/* Phase 2 – Question Bank */}
+          <Route path="questions" element={<QuestionsPage />} />
 
-        {/* Phase 4: Live Monitoring */}
-        <Route
-          path="monitoring"
-          element={<LiveMonitoringPage />}
-        />
+          {/* Phase 3 – Examinations */}
+          <Route path="exams" element={<AllExamsPage />} />
+          <Route path="exams/create" element={<CreateExamPage />} />
 
-        {/* Phase 5: Evaluation */}
-        <Route
-          path="evaluation"
-          element={<EvaluationPage />}
-        />
+          {/* Phase 4 – Live Monitoring */}
+          <Route path="monitoring" element={<LiveMonitoringPage />} />
 
-        {/* Phase 5: Results */}
-        <Route
-          path="results"
-          element={<ResultsPage />}
-        />
+          {/* Phase 5 – Results */}
+          <Route path="results" element={<ResultsPage />} />
+          {/* Uncomment the following routes if the corresponding pages exist */}
+          {/* <Route path="results/exams" element={<ExamListPage />} /> */}
+          {/* <Route path="results/exams/:examId" element={<ExamResultsPage />} /> */}
+          {/* <Route path="results/exams/:examId/students/:studentId" element={<StudentResultPage />} /> */}
+          {/* <Route path="results/exams/:examId/students/:studentId/review" element={<AnswerReviewPage />} /> */}
 
-        {/* Phase 6: Student Roster */}
-        <Route
-          path="students"
-          element={<StudentRosterPage />}
-        />
-        {/* Phase 6: Settings */}
-        <Route
-          path="settings"
-          element={<SettingsPage />}
-        />
-      </Route>
+          {/* Phase 6 – Student Roster */}
+          <Route path="students" element={<StudentRosterPage />} />
 
-      {/* Fallback to root */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+          {/* Phase 6 – Settings */}
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
+
+        {/* Fallback – any unknown route goes to the dashboard */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </QuestionBankProvider>
   );
 };
