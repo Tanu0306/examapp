@@ -1,95 +1,910 @@
-.checkbox-label {
+/* ─────────────────────────────────────────────────────────────────────────────
+   CreateExamPage.css  –  MCQ-first Create Exam with Question Bank integration
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* ── Page layout ─────────────────────────────────────────────────────────── */
+.create-exam-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 860px;
+}
+
+/* ── Sections ────────────────────────────────────────────────────────────── */
+.cep-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+
+.cep-section-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.cep-section-desc {
   font-size: 0.8125rem;
-  /* match question bank label font */
+  color: var(--text-secondary);
+  margin: 0 0 16px 0;
+}
+
+/* Section header with inline action */
+.cep-section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.cep-section-header-row>div {
+  flex: 1;
+}
+
+/* ── Two-column field grid ───────────────────────────────────────────────── */
+.cep-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 20px;
+}
+
+.cep-field-full {
+  grid-column: 1 / -1;
+}
+
+/* ── Shared form elements ────────────────────────────────────────────────── */
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.form-label .req {
+  color: var(--danger);
+  margin-left: 2px;
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-fast);
+  resize: vertical;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* ── Checkbox group ──────────────────────────────────────────────────────── */
+.cep-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  accent-color: var(--primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* ── CEP internal form rows ──────────────────────────────────────────────── */
+.cep-form-row {
+  margin-bottom: 14px;
+}
+
+.cep-form-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.cep-form-label .req {
+  color: var(--danger);
+  margin-left: 2px;
+}
+
+.cep-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+.cep-optional {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.cep-form-input {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.cep-form-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+  outline: none;
+}
+
+.cep-marks-input {
+  width: 120px;
+}
+
+.cep-form-textarea {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+}
+
+.cep-form-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+  outline: none;
+}
+
+/* Two-col layout for Marks + Explanation */
+.cep-form-row-two {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── Validation error ────────────────────────────────────────────────────── */
+.cep-form-error {
+  background: var(--danger-light);
+  border: 1px solid var(--danger-border);
+  border-radius: var(--radius-sm);
+  color: var(--danger-text);
+  font-size: 0.8125rem;
+  padding: 8px 12px;
+  margin-bottom: 14px;
+}
+
+/* ── Question Type Dropdown ──────────────────────────────────────────────── */
+.cep-type-select {
+  width: 240px;
+  height: 34px;
+  font-size: 0.875rem;
+}
+
+.cep-type-placeholder {
+  padding: 24px 16px;
+  background: var(--bg-subtle);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  text-align: center;
+  margin-top: 6px;
+}
+
+/* ── Options list ────────────────────────────────────────────────────────── */
+.cep-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.cep-option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cep-option-radio {
+  accent-color: var(--primary);
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.cep-option-letter {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 18px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.cep-option-text {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.cep-option-text:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
+  outline: none;
+}
+
+.cep-option-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.cep-option-remove:hover {
+  color: var(--danger);
+  background: var(--danger-light);
+}
+
+.cep-add-option-btn {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--primary);
+  background: none;
+  border: 1px dashed var(--primary-border);
+  border-radius: var(--radius-sm);
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.cep-add-option-btn:hover {
+  background: var(--primary-light);
+}
+
+/* ── Direct form add button row ──────────────────────────────────────────── */
+.cep-direct-form {
+  margin-top: 4px;
+}
+
+.cep-direct-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 4px;
+}
+
+/* ── Question list header ────────────────────────────────────────────────── */
+.cep-qlist-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 14px;
+  margin-bottom: 16px;
+}
+
+.cep-qlist-summary {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* ── Question cards ──────────────────────────────────────────────────────── */
+.cep-question-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cep-qcard {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  background: var(--bg-subtle);
+  transition: box-shadow var(--transition-fast);
+}
+
+.cep-qcard:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+/* Top row: Q-num | badges | marks | actions */
+.cep-qcard-toprow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.cep-qcard-num {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-light);
+  border-radius: var(--radius-sm);
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+
+.cep-qcard-badges {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex: 1;
+  flex-wrap: wrap;
 }
 
-/* Align new question inputs left (outer container) */
-.section-new-questions>.form-group {
+.cep-qcard-marks {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cep-qcard-actions {
   display: flex;
-  align-items: left;
-  gap: var(--spacing-2);
-  flex-wrap: nowrap;
-  justify-content: flex-start;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  flex-shrink: 0;
 }
 
-/* Wider title input */
-.title-input {
+.cep-qcard-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.6875rem;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.cep-qcard-btn:hover:not(:disabled) {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.cep-qcard-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.cep-btn-edit:hover:not(:disabled) {
+  color: var(--primary);
+  border-color: var(--primary-border);
+  background: var(--primary-light);
+}
+
+.cep-btn-remove:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger-border);
+  background: var(--danger-light);
+}
+
+/* Question statement */
+.cep-qcard-statement {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  line-height: 1.55;
+  margin: 0 0 10px 0;
+}
+
+/* Options inside the card (read-only teacher view) */
+.cep-qcard-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.cep-qcard-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid transparent;
+}
+
+.cep-qcard-option.is-correct {
+  background: var(--success-light);
+  border-color: var(--success-border);
+  color: var(--success-text);
+}
+
+.cep-qcard-opt-letter {
+  font-weight: 700;
+  font-size: 0.75rem;
+  min-width: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.cep-qcard-opt-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.cep-correct-mark {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--success);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Explanation */
+.cep-qcard-explanation {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: var(--warning-light);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  line-height: 1.4;
+}
+
+.cep-explanation-label {
+  font-weight: 600;
+  color: var(--warning-text);
+}
+
+/* ── Shared badges / pills ───────────────────────────────────────────────── */
+.cep-type-badge {
   display: inline-block;
-  width: 440px;
-  margin-right: var(--spacing-2);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
 }
 
-/* Small input for marks */
-.small-input {
+.cep-type-badge.type-mcq_single {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.cep-type-badge.type-mcq_multi {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.cep-diff-pill {
   display: inline-block;
-  width: 200px;
-  margin-right: var(--spacing-2);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
 }
 
-/* Ensure inner inputs fill container */
-.title-input .form-input,
-.small-input .form-input {
+.cep-diff-pill.diff-easy {
+  background: var(--success-light);
+  color: var(--success-text);
+}
+
+.cep-diff-pill.diff-medium {
+  background: var(--warning-light);
+  color: var(--warning-text);
+}
+
+.cep-diff-pill.diff-hard {
+  background: var(--danger-light);
+  color: var(--danger-text);
+}
+
+.cep-marks-chip {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
+.cep-subject-chip {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.cep-source-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #0369a1;
+  background: #e0f2fe;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+}
+
+/* ── Question Bank Modal ─────────────────────────────────────────────────── */
+.cep-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 16px;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.cep-modal-dialog {
+  background: var(--bg-surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-dropdown);
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  max-height: calc(100vh - 96px);
+  overflow: hidden;
 }
 
-/* Increase width of Add Question button a little */
-.section-new-questions .form-group button {
-  max-width: 150px;
-  /* increased from 120px */
-  width: auto;
+.cep-bank-dialog {
+  max-width: 760px;
 }
 
-/* Question list styling */
-.question-list ul {
-  list-style: none;
-  padding: 0;
+.cep-edit-dialog {
+  max-width: 600px;
+}
+
+.cep-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.cep-modal-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cep-modal-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
   margin: 0;
 }
 
-.question-list li {
-  padding: var(--spacing-2) 0;
-  border-bottom: 1px solid var(--border-subtle);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.cep-modal-sub {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0;
 }
 
-.question-list .remove-btn {
+.cep-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
-  color: var(--danger);
+  color: var(--text-muted);
   cursor: pointer;
-  font-size: var(--font-size-sm);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-/* Form groups spacing */
-.form-group {
-  margin-bottom: var(--spacing-3);
+.cep-modal-close:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
 }
 
-/* Section headings */
-.section-metadata h3,
-.section-lab h3,
-.section-security h3,
-.section-new-questions h3 {
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-medium);
-  margin-bottom: var(--spacing-2);
+/* ── Bank filters bar ────────────────────────────────────────────────────── */
+.cep-bank-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
-/* Buttons arrangement */
+.cep-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 180px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0 10px;
+  height: 32px;
+}
+
+.cep-search-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.cep-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  outline: none;
+  min-width: 0;
+}
+
+.cep-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.cep-search-clear {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.cep-search-clear:hover {
+  color: var(--text-secondary);
+}
+
+.cep-filter-select {
+  height: 32px;
+  padding: 0 28px 0 10px;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  background: var(--bg-subtle) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E") no-repeat right 9px center;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.cep-filter-select:focus {
+  border-color: var(--primary);
+}
+
+/* ── Bank question list ──────────────────────────────────────────────────── */
+.cep-bank-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.cep-bank-empty {
+  padding: 36px 24px;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.cep-bank-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border-bottom: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+.cep-bank-item:last-child {
+  border-bottom: none;
+}
+
+.cep-bank-item:hover:not(.is-duplicate) {
+  background: var(--bg-subtle);
+}
+
+.cep-bank-item.is-selected {
+  background: var(--primary-light);
+}
+
+.cep-bank-item.is-duplicate {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cep-bank-checkbox {
+  accent-color: var(--primary);
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.cep-bank-item.is-duplicate .cep-bank-checkbox {
+  cursor: not-allowed;
+}
+
+.cep-bank-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cep-bank-item-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+
+.cep-bank-item-statement {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.cep-bank-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.cep-duplicate-tag {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-muted);
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* ── Modal footer ────────────────────────────────────────────────────────── */
+.cep-modal-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.cep-bank-footer-info {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+/* ── Edit modal body ─────────────────────────────────────────────────────── */
+.cep-edit-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px;
+}
+
+/* ── Action buttons row ──────────────────────────────────────────────────── */
 .form-actions {
   display: flex;
-  gap: var(--spacing-2);
-  margin-top: var(--spacing-4);
+  gap: 8px;
+  margin-top: 4px;
+  margin-bottom: 24px;
 }
 
-.form-actions .btn-sm {
-  height: 32px;
-  /* keep consistent small button height */
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .cep-fields-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cep-form-row-two {
+    grid-template-columns: 1fr;
+  }
+
+  .cep-section-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cep-bank-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cep-filter-select {
+    width: 100%;
+  }
+
+  .cep-modal-backdrop {
+    padding: 16px;
+    align-items: flex-start;
+  }
+
+  .cep-bank-dialog,
+  .cep-edit-dialog {
+    max-width: 100%;
+  }
+
+  .cep-qcard-toprow {
+    flex-wrap: wrap;
+  }
+
+  .cep-type-toggle {
+    flex-wrap: wrap;
+  }
 }
