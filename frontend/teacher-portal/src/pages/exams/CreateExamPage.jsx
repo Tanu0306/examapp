@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Select } from '../../components/common/Select';
@@ -13,7 +13,6 @@ import {
 } from '../../components/common/Icons';
 import { useQuestionBank } from '../../context/QuestionBankContext';
 import { useExams } from '../../context/ExamContext';
-import { SUBJECT_OPTIONS, DIFFICULTY_LEVELS } from '../../data/questionStore';
 import { toast } from '../../utils/toast';
 import './CreateExamPage.css';
 
@@ -41,12 +40,16 @@ const TYPE_LABELS = {
   mcq_multi:  'Multiple Correct',
 };
 
-const DIFF_LEVELS = DIFFICULTY_LEVELS; // ['Easy', 'Medium', 'Hard']
-
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
 const genId    = () => `cep-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 const genOptId = () => `opt-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
+const toDateTimeInput = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+};
 
 const defaultOptions = () => [
   { id: genOptId(), text: '', isCorrect: true  },
@@ -57,11 +60,11 @@ const defaultOptions = () => [
 
 // ─── DateTimePicker ───────────────────────────────────────────────────────────
 
-const DateTimePicker = ({ label, value, onChange }) => (
+const DateTimePicker = ({ label, value, onChange, required = true }) => (
   <div className="form-group">
     {label && (
       <label className="form-label">
-        {label}<span className="req">*</span>
+        {label}{required && <span className="req">*</span>}
       </label>
     )}
     <input
@@ -69,7 +72,7 @@ const DateTimePicker = ({ label, value, onChange }) => (
       className="form-input"
       value={value}
       onChange={onChange}
-      required
+      required={required}
     />
   </div>
 );
@@ -78,8 +81,6 @@ const DateTimePicker = ({ label, value, onChange }) => (
 
 const QuestionBankModal = ({ allQuestions, alreadyAddedBankIds, onClose, onAdd }) => {
   const [search,          setSearch]          = useState('');
-  const [filterSubject,   setFilterSubject]   = useState('');
-  const [filterDifficulty,setFilterDifficulty]= useState('');
   const [filterType,      setFilterType]      = useState('');
   const [selected,        setSelected]        = useState(new Set());
 
@@ -92,8 +93,6 @@ const QuestionBankModal = ({ allQuestions, alreadyAddedBankIds, onClose, onAdd }
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return mcqOnly.filter(question => {
-      if (filterSubject    && question.subject    !== filterSubject)    return false;
-      if (filterDifficulty && question.difficulty !== filterDifficulty) return false;
       if (filterType       && question.type       !== filterType)       return false;
       if (q &&
         !question.title.toLowerCase().includes(q) &&
@@ -101,7 +100,7 @@ const QuestionBankModal = ({ allQuestions, alreadyAddedBankIds, onClose, onAdd }
       ) return false;
       return true;
     });
-  }, [mcqOnly, search, filterSubject, filterDifficulty, filterType]);
+  }, [mcqOnly, search, filterType]);
 
   const toggle = (id) => {
     if (alreadyAddedBankIds.has(id)) return;
@@ -157,14 +156,6 @@ const QuestionBankModal = ({ allQuestions, alreadyAddedBankIds, onClose, onAdd }
               </button>
             )}
           </div>
-          <select className="cep-filter-select" value={filterSubject} onChange={e => setFilterSubject(e.target.value)}>
-            <option value="">All Subjects</option>
-            {SUBJECT_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <select className="cep-filter-select" value={filterDifficulty} onChange={e => setFilterDifficulty(e.target.value)}>
-            <option value="">All Difficulties</option>
-            {DIFF_LEVELS.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
           <select className="cep-filter-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
             <option value="">All Types</option>
             {MCQ_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
@@ -204,9 +195,7 @@ const QuestionBankModal = ({ allQuestions, alreadyAddedBankIds, onClose, onAdd }
                     )}
                     <div className="cep-bank-item-meta">
                       <span className={`cep-type-badge type-${q.type}`}>{TYPE_LABELS[q.type]}</span>
-                      <span className={`cep-diff-pill diff-${(q.difficulty || '').toLowerCase()}`}>{q.difficulty}</span>
                       <span className="cep-marks-chip">{q.marks} pts</span>
-                      {q.subject && <span className="cep-subject-chip">{q.subject}</span>}
                     </div>
                   </div>
                   {isDupe && <span className="cep-duplicate-tag">Already added</span>}
@@ -372,8 +361,8 @@ const validateMCQ = (statement, options, qType, marks) => {
   if (options.some(o => !o.text.trim()))           return 'All option fields must be filled in.';
   if (qType === 'mcq_single' && options.filter(o => o.isCorrect).length !== 1)
     return 'Single Correct MCQ must have exactly one correct answer.';
-  if (qType === 'mcq_multi'  && options.filter(o => o.isCorrect).length < 1)
-    return 'Multiple Correct MCQ must have at least one correct answer.';
+  if (qType === 'mcq_multi'  && options.filter(o => o.isCorrect).length < 2)
+    return 'Multiple Correct MCQ must have at least two correct answers.';
   if (!marks || isNaN(marks) || Number(marks) <= 0)
     return 'Marks must be a positive number.';
   return null;
@@ -588,8 +577,12 @@ const EditMCQModal = ({ question, onClose, onSave }) => {
 
 export const CreateExamPage = () => {
   const navigate = useNavigate();
+  const { examId } = useParams();
+  const isEditingExam = Boolean(examId);
   const { questions: bankQuestions } = useQuestionBank();
-  const { addExam } = useExams();
+  const { addExam, updateExam, getExam } = useExams();
+  const [isLoadingExam, setIsLoadingExam] = useState(isEditingExam);
+  const [isSaving, setIsSaving] = useState(false);
 
   // ── Exam metadata ──
   const [title,              setTitle]              = useState('');
@@ -607,6 +600,41 @@ export const CreateExamPage = () => {
   const [examQuestions,  setExamQuestions]  = useState([]);
   const [showBankModal,  setShowBankModal]  = useState(false);
   const [editingQ,       setEditingQ]       = useState(null);
+
+  useEffect(() => {
+    if (!examId) return undefined;
+    let cancelled = false;
+    setIsLoadingExam(true);
+    getExam(examId)
+      .then((exam) => {
+        if (cancelled) return;
+        setTitle(exam.title || '');
+        setSubject(exam.subject || '');
+        setCourse(exam.course || '');
+        setInstructions(exam.instructions || '');
+        setDateTime(toDateTimeInput(exam.schedule));
+        setDuration(Number(exam.duration) || 60);
+        setLab(exam.lab || mockLabs[0].value);
+        setBatch(exam.batch || '');
+        setAllowTabSwitch(Boolean(exam.security?.allowTabSwitch));
+        setEnableAudioMonitor(Boolean(exam.security?.enableAudioMonitor));
+        setExamQuestions((exam.questions || []).map((question) => ({
+          ...question,
+          _examId: question._examId || genId(),
+          _source: question._source || 'direct',
+        })));
+      })
+      .catch((requestError) => {
+        if (!cancelled) {
+          toast.error(requestError.message);
+          navigate('/exams');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingExam(false);
+      });
+    return () => { cancelled = true; };
+  }, [examId, getExam, navigate]);
 
   // IDs of bank questions already in the exam (duplicate guard)
   const alreadyAddedBankIds = useMemo(
@@ -667,10 +695,14 @@ export const CreateExamPage = () => {
 
   // ── Save / Publish ──
 
-  const handleSave = (publish = false) => {
+  const handleSave = async (publish = false) => {
     if (!title.trim())   { toast.error('Exam title is required');       return; }
     if (!subject.trim()) { toast.error('Subject is required');          return; }
-    if (!dateTime)       { toast.error('Date & time are required');     return; }
+    if (publish && !dateTime) { toast.error('Date & time are required to publish'); return; }
+    if (!Number.isFinite(Number(duration)) || Number(duration) <= 0) {
+      toast.error('Duration must be greater than zero.');
+      return;
+    }
 
     if (publish && examQuestions.length === 0) {
       toast.error('Add at least one question before publishing.');
@@ -685,8 +717,8 @@ export const CreateExamPage = () => {
       if (!q.options || q.options.length < 2)      { toast.error(`${label}: At least 2 options are required.`);return; }
       if (q.type === 'mcq_single' && q.options.filter(o => o.isCorrect).length !== 1)
         { toast.error(`${label}: Single Correct MCQ must have exactly one correct answer.`); return; }
-      if (q.type === 'mcq_multi'  && q.options.filter(o => o.isCorrect).length < 1)
-        { toast.error(`${label}: Multiple Correct MCQ must have at least one correct answer.`); return; }
+      if (q.type === 'mcq_multi'  && q.options.filter(o => o.isCorrect).length < 2)
+        { toast.error(`${label}: Multiple Correct MCQ must have at least two correct answers.`); return; }
       if (!q.marks || Number(q.marks) <= 0)        { toast.error(`${label}: Marks must be a positive number.`);return; }
     }
 
@@ -695,7 +727,7 @@ export const CreateExamPage = () => {
       subject:      subject.trim(),
       course,
       instructions,
-      schedule:     dateTime,
+      schedule:     dateTime ? new Date(dateTime).toISOString() : null,
       duration:     Number(duration),
       lab,
       batch,
@@ -705,16 +737,30 @@ export const CreateExamPage = () => {
       status:       publish ? 'published' : 'draft',
     };
 
-    addExam(payload);
-    toast.success(publish ? 'Exam published!' : 'Draft saved');
-    setTimeout(() => navigate('/exams'), 1200);
+    setIsSaving(true);
+    try {
+      if (isEditingExam) await updateExam(examId, payload);
+      else await addExam(payload);
+      toast.success(isEditingExam
+        ? (publish ? 'Exam changes published.' : 'Draft changes saved.')
+        : (publish ? 'Exam published!' : 'Draft saved to the database.'));
+      setTimeout(() => navigate('/exams'), 800);
+    } catch (requestError) {
+      toast.error(requestError.message || 'Unable to save this exam.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // ── Render ──
 
+  if (isLoadingExam) {
+    return <div className="create-exam-page" role="status">Loading exam for editing…</div>;
+  }
+
   return (
     <div className="create-exam-page">
-      <h2 className="page-title">Create New Exam</h2>
+      <h2 className="page-title">{isEditingExam ? 'Edit Examination' : 'Create New Exam'}</h2>
 
       {/* ── Exam Details ── */}
       <section className="cep-section">
@@ -748,6 +794,7 @@ export const CreateExamPage = () => {
             label="Date & Time"
             value={dateTime}
             onChange={e => setDateTime(e.target.value)}
+            required={false}
           />
           <Input
             label="Duration (minutes)"
@@ -924,13 +971,15 @@ export const CreateExamPage = () => {
           size="sm"
           onClick={() => handleSave(false)}
           icon={CheckIcon}
+          isLoading={isSaving}
         >
-          Save Draft
+          {isEditingExam ? 'Save Changes as Draft' : 'Save Draft'}
         </Button>
         <Button
           variant="primary"
           onClick={() => handleSave(true)}
           icon={CheckIcon}
+          isLoading={isSaving}
         >
           Publish Exam
         </Button>

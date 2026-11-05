@@ -4,6 +4,7 @@ import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import pool from './conn.js';
 import authRouter from './routers/authRouter.js';
+import examRouter from './routers/examRouter.js';
 import questionBankRouter from './routers/questionBankRouter.js';
 import { isAuthenticated } from './middlewares/authMiddleware.js';
 import { notFound, errorHandler } from './middlewares/errorMiddleware.js';
@@ -63,6 +64,7 @@ app.use('/api', isAuthenticated);
 
 // Folder and question APIs use the signed-in teacher's automatically provisioned bank.
 app.use('/api/question-bank', questionBankRouter);
+app.use('/api/exams', examRouter);
 
 
 

@@ -1,82 +1,81 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from "react-router-dom";
+import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { CheckIcon, XIcon } from '../../components/common/Icons';
+import { useExams } from '../../context/ExamContext';
+import { toast } from '../../utils/toast';
 import './AllExamsPage.css';
 
-// Mock exam data – replace with real API calls in production
-const mockExams = [
-  { id: '1', title: 'Midterm Chemistry', status: 'ongoing', date: '2024-10-15' },
-  { id: '2', title: 'Final Physics',    status: 'scheduled', date: '2024-12-01' },
-  { id: '3', title: 'Quiz Math',       status: 'draft',     date: '' },
-  { id: '4', title: 'Project Presentation', status: 'completed', date: '2024-09-20' },
-];
+const formatSchedule = (schedule) => {
+  if (!schedule) return '--';
+  const date = new Date(schedule);
+  return Number.isNaN(date.getTime()) ? '--' : date.toLocaleString();
+};
 
 export const AllExamsPage = () => {
   const navigate = useNavigate();
-  const [exams, setExams] = useState([]);
+  const { exams, isLoading, error, deleteExam } = useExams();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
 
-  // Simulate fetching exams
-  useEffect(() => {
-    setExams(mockExams);
-  }, []);
-
-  const filteredExams = exams.filter((exam) => {
+  const filteredExams = useMemo(() => exams.filter((exam) => {
     const matchesSearch = exam.title.toLowerCase().includes(search.toLowerCase());
     const matchesFilter = filter === 'all' || exam.status === filter;
     return matchesSearch && matchesFilter;
-  });
+  }), [exams, search, filter]);
 
-  const handleAction = (examId, action) => {
-    console.log(`Exam ${examId} - ${action}`);
-    if (action === 'delete') {
-      setExams((prev) => prev.filter((e) => e.id !== examId));
+  const handleDelete = async (exam) => {
+    if (!window.confirm(`Delete "${exam.title}"? This cannot be undone.`)) return;
+    try {
+      await deleteExam(exam.id);
+      toast.success('Exam deleted.');
+    } catch (requestError) {
+      toast.error(requestError.message);
     }
-    // Add further actions (cancel, reschedule, duplicate, view results) as needed
   };
 
   return (
     <div className="all-exams-page">
       <h2 className="page-title">All Examinations</h2>
 
-      {/* Controls: search, status filter, create new exam */}
       <div className="controls">
         <Input
           placeholder="Search exams..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(event) => setSearch(event.target.value)}
           className="exam-search-input"
         />
         <div className="status-filters">
-          {['all', 'ongoing', 'scheduled', 'draft', 'completed'].map((st) => (
+          {['all', 'draft', 'published'].map((status) => (
             <Button
-              key={st}
-              variant={filter === st ? 'primary' : 'secondary'}
+              key={status}
+              variant={filter === status ? 'primary' : 'secondary'}
               size="sm"
-              onClick={() => setFilter(st)}
+              onClick={() => setFilter(status)}
             >
-              {st.charAt(0).toUpperCase() + st.slice(1)}
+              {status.charAt(0).toUpperCase() + status.slice(1)}
             </Button>
           ))}
         </div>
-        <Button variant="primary" onClick={() => navigate('/teacher/create-exam')} icon={CheckIcon}>
+        <Button variant="primary" onClick={() => navigate('/exams/create')} icon={CheckIcon}>
           Create New Exam
         </Button>
       </div>
 
-      {/* Exam list */}
-      {filteredExams.length === 0 ? (
-        <p className="no-results">No exams match your criteria.</p>
+      {error && <p className="no-results" role="alert">{error}</p>}
+      {isLoading ? (
+        <p className="no-results" role="status">Loading examinations…</p>
+      ) : filteredExams.length === 0 ? (
+        <p className="no-results">No examinations match your criteria.</p>
       ) : (
         <table className="exam-table">
           <thead>
             <tr>
               <th>Title</th>
               <th>Status</th>
-              <th>Date</th>
+              <th>Scheduled</th>
+              <th>Questions</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -85,11 +84,25 @@ export const AllExamsPage = () => {
               <tr key={exam.id}>
                 <td>{exam.title}</td>
                 <td>{exam.status}</td>
-                <td>{exam.date || '--'}</td>
+                <td>{formatSchedule(exam.schedule)}</td>
+                <td>{exam.questionCount ?? exam.questions?.length ?? 0}</td>
                 <td className="action-cell">
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/teacher/exams/${exam.id}/details`)} icon={CheckIcon}>View</Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/teacher/exams/${exam.id}/edit`)} icon={CheckIcon}>Edit</Button>
-                  <Button variant="danger" size="sm" onClick={() => handleAction(exam.id, 'delete')} icon={XIcon}>Delete</Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/exams/${exam.id}/edit`)}
+                    icon={CheckIcon}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleDelete(exam)}
+                    icon={XIcon}
+                  >
+                    Delete
+                  </Button>
                 </td>
               </tr>
             ))}

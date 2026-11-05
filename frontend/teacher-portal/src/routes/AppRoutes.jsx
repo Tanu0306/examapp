@@ -106,6 +106,14 @@ export const AppRoutes = () => {
               </QuestionBankProvider>
             }
           />
+          <Route
+            path="exams/:examId/edit"
+            element={
+              <QuestionBankProvider>
+                <CreateExamPage />
+              </QuestionBankProvider>
+            }
+          />
 
           {/* Phase 4 – Live Monitoring */}
           <Route path="monitoring" element={<LiveMonitoringPage />} />
