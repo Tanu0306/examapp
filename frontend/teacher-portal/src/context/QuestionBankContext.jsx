@@ -1,194 +1,238 @@
-import React, { createContext, useContext, useState } from 'react';
-import { useQuestions } from './QuestionContext';
-
-// -----------------------------------------------------------------------------
-// QuestionBankContext – folder-wise organisation on top of QuestionContext.
-// Folders store their question associations as an array of question IDs
-// (folder.questionIds[]). This means:
-//   - Existing question records need ZERO changes.
-//   - A question can appear in multiple folders (shared) without duplicating data.
-//   - questionsInFolder() looks up IDs from the folder, not from q.folderId.
-// -----------------------------------------------------------------------------
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { useAuth } from './AuthContext';
 
 const QuestionBankContext = createContext(null);
+const API_ROOT = '/api/question-bank';
 
-const FOLDERS_STORAGE_KEY = 'examlan_teacher_folders_v1';
+const apiRequest = async (path, { method = 'GET', body } = {}) => {
+  const response = await fetch(`${API_ROOT}${path}`, {
+    method,
+    credentials: 'include',
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
 
-const loadFolders = () => {
-  try {
-    const saved = localStorage.getItem(FOLDERS_STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) return parsed;
-    }
-  } catch {}
-  return [];
+  if (response.status === 204) return null;
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Question bank request failed.');
+  return data;
 };
 
-const saveFolders = (folders) => {
-  try {
-    localStorage.setItem(FOLDERS_STORAGE_KEY, JSON.stringify(folders));
-  } catch {}
-};
+const normalizeQuestion = (question) => ({
+  ...question,
+  title: question.title || question.statement,
+  negativeMarks: Number(question.negativeMarks || 0),
+  marks: Number(question.marks || 1),
+  options: (question.options || []).map((option) => ({
+    ...option,
+    isCorrect: Boolean(option.isCorrect),
+  })),
+});
+
+const questionPayload = (question, folderIds) => ({
+  type: question.type,
+  statement: question.statement,
+  options: question.options.map(({ text, isCorrect }) => ({ text, isCorrect })),
+  explanation: question.explanation || null,
+  marks: Number(question.marks),
+  negativeMarks: Number(question.negativeMarks || 0),
+  folderIds,
+});
 
 export const QuestionBankProvider = ({ children }) => {
-  const {
-    questions,
-    addQuestion,
-    updateQuestion,
-    deleteQuestion,
-    duplicateQuestion,
-    importQuestions,
-    exportQuestions,
-    resetToDefaults,
-  } = useQuestions();
-
-  // Folders: [{ id, name, description, questionIds: [] }]
-  const [folders, setFolders] = useState(loadFolders);
+  const { user } = useAuth();
+  const [folders, setFolders] = useState([]);
+  const [questions, setQuestions] = useState([]);
   const [selectedFolderId, setSelectedFolderId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Persist folders whenever they change
-  const updateFolders = (updater) => {
-    setFolders((prev) => {
-      const next = typeof updater === 'function' ? updater(prev) : updater;
-      saveFolders(next);
-      return next;
+  const refreshData = useCallback(async ({ showLoading = true } = {}) => {
+    if (showLoading) setIsLoading(true);
+    setError('');
+    try {
+      const [folderData, questionData] = await Promise.all([
+        apiRequest('/folders'),
+        apiRequest('/questions'),
+      ]);
+      const loadedQuestions = (questionData.questions || []).map(normalizeQuestion);
+      const questionIdsByFolder = new Map();
+      for (const question of loadedQuestions) {
+        for (const folderId of question.folderIds || []) {
+          const ids = questionIdsByFolder.get(folderId) || [];
+          ids.push(question.id);
+          questionIdsByFolder.set(folderId, ids);
+        }
+      }
+      const loadedFolders = (folderData.folders || []).map((folder) => ({
+        ...folder,
+        questionIds: questionIdsByFolder.get(folder.id) || [],
+      }));
+
+      setFolders(loadedFolders);
+      setQuestions(loadedQuestions);
+      setSelectedFolderId((currentId) =>
+        currentId && loadedFolders.some((folder) => folder.id === currentId) ? currentId : null
+      );
+      return { folders: loadedFolders, questions: loadedQuestions };
+    } catch (requestError) {
+      setError(requestError.message);
+      throw requestError;
+    } finally {
+      if (showLoading) setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    setFolders([]);
+    setQuestions([]);
+    setSelectedFolderId(null);
+    refreshData().catch(() => {});
+  }, [user?.id, refreshData]);
+
+  const addFolder = async (name) => {
+    const data = await apiRequest('/folders', { method: 'POST', body: { name } });
+    await refreshData({ showLoading: false });
+    return data.folder;
+  };
+
+  const updateFolder = async (id, updates) => {
+    const data = await apiRequest(`/folders/${id}`, {
+      method: 'PATCH',
+      body: { name: updates.name },
     });
+    await refreshData({ showLoading: false });
+    return data.folder;
   };
 
-  // ── Folder CRUD ────────────────────────────────────────────────────────────
-
-  const addFolder = (name, description = '') => {
-    const id = `fld-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-    updateFolders((prev) => [...prev, { id, name, description, questionIds: [] }]);
-    return id;
+  const deleteFolder = async (id) => {
+    await apiRequest(`/folders/${id}`, { method: 'DELETE' });
+    setSelectedFolderId((currentId) => currentId === id ? null : currentId);
+    await refreshData({ showLoading: false });
   };
 
-  const updateFolder = (id, updates) => {
-    updateFolders((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, ...updates } : f))
-    );
+  const addQuestionToFolder = async (questionData, folderId) => {
+    const data = await apiRequest('/questions', {
+      method: 'POST',
+      body: questionPayload(questionData, [folderId]),
+    });
+    await refreshData({ showLoading: false });
+    return normalizeQuestion(data.question);
   };
 
-  const renameFolder = (id, newName) => updateFolder(id, { name: newName });
-
-  const deleteFolder = (id) => {
-    updateFolders((prev) => prev.filter((f) => f.id !== id));
-    if (selectedFolderId === id) setSelectedFolderId(null);
+  const addExistingQuestionsToFolder = async (questionIds, folderId) => {
+    await apiRequest(`/folders/${folderId}/questions`, {
+      method: 'POST',
+      body: { questionIds },
+    });
+    await refreshData({ showLoading: false });
   };
 
-  // ── Folder ↔ Question associations ────────────────────────────────────────
-
-  /**
-   * Add a brand-new question (created from the MCQ form) and immediately
-   * link it to the given folder. Returns the new question object.
-   */
-  const addQuestionToFolder = (questionData, folderId) => {
-    const newQ = addQuestion(questionData);        // creates in QuestionContext
-    updateFolders((prev) =>
-      prev.map((f) =>
-        f.id === folderId
-          ? { ...f, questionIds: [...new Set([...f.questionIds, newQ.id])] }
-          : f
-      )
-    );
-    return newQ;
+  const removeQuestionFromFolder = async (questionId, folderId) => {
+    await apiRequest(`/folders/${folderId}/questions/${questionId}`, { method: 'DELETE' });
+    await refreshData({ showLoading: false });
   };
 
-  /**
-   * Link one or more existing question IDs to a folder (no data duplication).
-   */
-  const addExistingQuestionsToFolder = (questionIds, folderId) => {
-    updateFolders((prev) =>
-      prev.map((f) =>
-        f.id === folderId
-          ? { ...f, questionIds: [...new Set([...f.questionIds, ...questionIds])] }
-          : f
-      )
-    );
+  const updateQuestion = async (id, updates) => {
+    const data = await apiRequest(`/questions/${id}`, {
+      method: 'PATCH',
+      body: questionPayload(updates, []),
+    });
+    await refreshData({ showLoading: false });
+    return normalizeQuestion(data.question);
   };
 
-  /**
-   * Remove a question ID from a folder (does NOT delete the question itself).
-   */
-  const removeQuestionFromFolder = (questionId, folderId) => {
-    updateFolders((prev) =>
-      prev.map((f) =>
-        f.id === folderId
-          ? { ...f, questionIds: f.questionIds.filter((id) => id !== questionId) }
-          : f
-      )
-    );
+  const deleteQuestion = async (id) => {
+    await apiRequest(`/questions/${id}`, { method: 'DELETE' });
+    await refreshData({ showLoading: false });
   };
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  const getFolderById = (id) => folders.find((f) => f.id === id) || null;
-
-  /** Questions that belong to a specific folder (by ID lookup in the folder). */
-  const questionsInFolder = (folderId) => {
-    const folder = getFolderById(folderId);
-    if (!folder) return [];
-    return questions.filter((q) => folder.questionIds.includes(q.id));
+  const duplicateQuestion = async (id) => {
+    const original = questions.find((question) => question.id === id);
+    if (!original) return null;
+    const folderIds = foldersForQuestion(id).map((folder) => folder.id);
+    if (folderIds.length === 0) return null;
+    const data = await apiRequest('/questions', {
+      method: 'POST',
+      body: questionPayload(original, folderIds),
+    });
+    await refreshData({ showLoading: false });
+    return normalizeQuestion(data.question);
   };
 
-  /** Questions not in ANY folder. */
-  const unassignedQuestions = () => {
-    const allLinkedIds = new Set(folders.flatMap((f) => f.questionIds));
-    return questions.filter((q) => !allLinkedIds.has(q.id));
+  const importQuestions = async (importedArray, folderId) => {
+    if (!Array.isArray(importedArray) || !folderId) return { count: 0 };
+    let count = 0;
+    let skipped = 0;
+    for (const question of importedArray) {
+      try {
+        const normalized = normalizeQuestion(question);
+        if (!normalized.statement || normalized.options.length !== 4) {
+          skipped += 1;
+          continue;
+        }
+        await apiRequest('/questions', {
+          method: 'POST',
+          body: questionPayload(normalized, [folderId]),
+        });
+        count += 1;
+      } catch {
+        skipped += 1;
+      }
+    }
+    await refreshData({ showLoading: false });
+    return { count, skipped };
   };
 
-  /** All folder IDs that contain a given question ID. */
+  const exportQuestions = () => {
+    const json = JSON.stringify(questions, null, 2);
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `examlan-question-bank-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const getFolderById = (id) => folders.find((folder) => folder.id === id) || null;
+  const questionsInFolder = (folderId) =>
+    questions.filter((question) => (question.folderIds || []).includes(folderId));
+  const unassignedQuestions = () => [];
   const foldersForQuestion = (questionId) =>
-    folders.filter((f) => f.questionIds.includes(questionId));
+    folders.filter((folder) => (folder.questionIds || []).includes(questionId));
 
-  // ── Provider ───────────────────────────────────────────────────────────────
+  const value = {
+    questions,
+    folders,
+    isLoading,
+    error,
+    refreshData,
+    selectedFolderId,
+    setSelectedFolderId,
+    addFolder,
+    updateFolder,
+    deleteFolder,
+    addQuestionToFolder,
+    addExistingQuestionsToFolder,
+    removeQuestionFromFolder,
+    duplicateQuestion,
+    exportQuestions,
+    importQuestions,
+    deleteQuestion,
+    updateQuestion,
+    getFolderById,
+    questionsInFolder,
+    unassignedQuestions,
+    foldersForQuestion,
+  };
 
-  return (
-    <QuestionBankContext.Provider
-      value={{
-        // Raw question helpers (forwarded from QuestionContext)
-        questions,
-        addQuestion,
-        updateQuestion,
-        deleteQuestion,
-        duplicateQuestion,
-        importQuestions,
-        exportQuestions,
-        resetToDefaults,
-
-        // Folder state
-        folders,
-        selectedFolderId,
-        setSelectedFolderId,
-
-        // Folder CRUD
-        addFolder,
-        updateFolder,
-        renameFolder,
-        deleteFolder,
-
-        // Folder ↔ question associations
-        addQuestionToFolder,
-        addExistingQuestionsToFolder,
-        removeQuestionFromFolder,
-
-        // Helpers
-        getFolderById,
-        questionsInFolder,
-        unassignedQuestions,
-        foldersForQuestion,
-      }}
-    >
-      {children}
-    </QuestionBankContext.Provider>
-  );
+  return <QuestionBankContext.Provider value={value}>{children}</QuestionBankContext.Provider>;
 };
 
 export const useQuestionBank = () => {
   const context = useContext(QuestionBankContext);
-  if (!context) {
-    throw new Error('useQuestionBank must be used within a QuestionBankProvider');
-  }
+  if (!context) throw new Error('useQuestionBank must be used within a QuestionBankProvider');
   return context;
 };

@@ -25,8 +25,10 @@ import { QuestionBankProvider } from '../context/QuestionBankContext';
 /* -------------------------------------------------------------------------- */
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isSessionLoading } = useAuth();
   const location = useLocation();
+
+  if (isSessionLoading) return <div className="route-loading">Checking your session…</div>;
 
   if (!isAuthenticated) {
     // Redirect unauthenticated users to the login page
@@ -37,7 +39,9 @@ const ProtectedRoute = ({ children }) => {
 };
 
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isSessionLoading } = useAuth();
+
+  if (isSessionLoading) return <div className="route-loading">Checking your session…</div>;
 
   if (isAuthenticated) {
     // If already logged in, prevent access to login / register pages
@@ -53,7 +57,6 @@ const PublicRoute = ({ children }) => {
 
 export const AppRoutes = () => {
   return (
-    <QuestionBankProvider>
       <Routes>
         {/* Public Auth Routes */}
         <Route
@@ -86,11 +89,23 @@ export const AppRoutes = () => {
           <Route index element={<DashboardPage />} />
 
           {/* Phase 2 – Question Bank */}
-          <Route path="questions" element={<QuestionsPage />} />
+          <Route path="questions"  element={
+            <ProtectedRoute>
+              <QuestionBankProvider>
+                <QuestionsPage />
+              </QuestionBankProvider>
+            </ProtectedRoute>
+          }/>
 
-          {/* Phase 3 – Examinations */}
           <Route path="exams" element={<AllExamsPage />} />
-          <Route path="exams/create" element={<CreateExamPage />} />
+          <Route
+            path="exams/create"
+            element={
+              <QuestionBankProvider>
+                <CreateExamPage />
+              </QuestionBankProvider>
+            }
+          />
 
           {/* Phase 4 – Live Monitoring */}
           <Route path="monitoring" element={<LiveMonitoringPage />} />
@@ -113,6 +128,5 @@ export const AppRoutes = () => {
         {/* Fallback – any unknown route goes to the dashboard */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </QuestionBankProvider>
   );
 };

@@ -17,17 +17,12 @@ import {
   UploadIcon,
   ChevronLeftIcon,
 } from '../../components/common/Icons';
-import {
-  SUBJECT_OPTIONS,
-  QUESTION_TYPES,
-  DIFFICULTY_LEVELS,
-} from '../../data/questionStore';
 import './QuestionsPage.css';
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
 const typeLabel = (type) => {
-  if (type === 'mcq_single') return 'Multiple Choice';
-  if (type === 'mcq_multi') return 'Multiple Choice';
+  if (type === 'mcq_single') return 'Single Correct MCQ';
+  if (type === 'mcq_multi') return 'Multiple Correct MCQ';
   if (type === 'coding') return 'Coding';
   if (type === 'blanks') return 'Fill in Blanks';
   if (type === 'short_answer') return 'Short Answer';
@@ -39,6 +34,8 @@ export const QuestionsPage = () => {
   const {
     questions,
     folders,
+    isLoading,
+    error: loadError,
     addFolder,
     updateFolder,
     deleteFolder,
@@ -52,7 +49,6 @@ export const QuestionsPage = () => {
     duplicateQuestion,
     exportQuestions,
     importQuestions,
-    resetToDefaults,
     deleteQuestion,
     updateQuestion,
     getFolderById,
@@ -73,6 +69,7 @@ export const QuestionsPage = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [removeFolderConfirm, setRemoveFolderConfirm] = useState(null); // { questionId, folderId }
   const [showImportModal, setShowImportModal] = useState(false);
+  const [importFolderId, setImportFolderId] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
 
   const fileInputRef = useRef(null);
@@ -90,8 +87,7 @@ export const QuestionsPage = () => {
   const stats = useMemo(() => ({
     total: questions.length,
     mcq: questions.filter((q) => q.type === 'mcq_single' || q.type === 'mcq_multi').length,
-    coding: questions.filter((q) => q.type === 'coding').length,
-    subjective: questions.filter((q) => q.type === 'short_answer' || q.type === 'blanks').length,
+    multiCorrect: questions.filter((q) => q.type === 'mcq_multi').length,
   }), [questions]);
 
   // Global search across all questions
@@ -111,43 +107,56 @@ export const QuestionsPage = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const parsed = JSON.parse(event.target?.result);
-        const res = importQuestions(parsed);
-        if (res.count > 0) {
-          showToast(`Imported ${res.count} questions.`, 'success');
+        const targetFolderId = selectedFolderId || importFolderId;
+        const result = await importQuestions(parsed, targetFolderId);
+        if (result.count > 0) {
+          showToast(`Imported ${result.count} questions${result.skipped ? `; skipped ${result.skipped}` : ''}.`, 'success');
           setShowImportModal(false);
         } else {
-          showToast('No valid questions found in file.', 'error');
+          showToast(result.skipped ? `No questions imported; ${result.skipped} were invalid or unsupported.` : 'Choose a folder before importing.', 'error');
         }
-      } catch {
-        showToast('Invalid JSON file.', 'error');
+      } catch (error) {
+        showToast(error.message || 'Invalid JSON file.', 'error');
       }
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsText(file);
   };
 
-  const handleDeleteQuestion = () => {
+  const handleDeleteQuestion = async () => {
     if (deleteConfirmId) {
-      deleteQuestion(deleteConfirmId);
-      setDeleteConfirmId(null);
-      showToast('Question deleted from repository.', 'info');
+      try {
+        await deleteQuestion(deleteConfirmId);
+        setDeleteConfirmId(null);
+        showToast('Question deleted from the bank.', 'info');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
     }
   };
 
-  const handleRemoveFromFolder = () => {
+  const handleRemoveFromFolder = async () => {
     if (removeFolderConfirm) {
-      removeQuestionFromFolder(removeFolderConfirm.questionId, removeFolderConfirm.folderId);
-      setRemoveFolderConfirm(null);
-      showToast('Question removed from folder.', 'info');
+      try {
+        await removeQuestionFromFolder(removeFolderConfirm.questionId, removeFolderConfirm.folderId);
+        setRemoveFolderConfirm(null);
+        showToast('Question removed from folder.', 'info');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
     }
   };
 
-  const handleDuplicate = (id) => {
-    const copy = duplicateQuestion(id);
-    if (copy) showToast(`Duplicated "${copy.title}"`, 'success');
+  const handleDuplicate = async (id) => {
+    try {
+      const copy = await duplicateQuestion(id);
+      if (copy) showToast(`Duplicated "${copy.title}"`, 'success');
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
   };
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -165,6 +174,13 @@ export const QuestionsPage = () => {
             <XIcon size={13} />
           </button>
         </div>
+      )}
+
+      {loadError && (
+        <div className="questions-toast toast-error" role="alert">{loadError}</div>
+      )}
+      {isLoading && (
+        <div className="questions-loading" role="status">Loading your question bank…</div>
       )}
 
       {/* ── 1. Header ───────────────────────────────────────────────────── */}
@@ -190,7 +206,7 @@ export const QuestionsPage = () => {
         <div className="stat-unit">
           <span className="stat-unit-label">Total Questions</span>
           <span className="stat-unit-val">{stats.total}</span>
-          <span className="stat-unit-sub">in local repository</span>
+          <span className="stat-unit-sub">in your question bank</span>
         </div>
         <div className="stat-unit-sep" />
         <div className="stat-unit">
@@ -200,9 +216,9 @@ export const QuestionsPage = () => {
         </div>
         <div className="stat-unit-sep" />
         <div className="stat-unit">
-          <span className="stat-unit-label">Coding Problems</span>
-          <span className="stat-unit-val">{stats.coding}</span>
-          <span className="stat-unit-sub">with test cases</span>
+          <span className="stat-unit-label">Multiple Correct</span>
+          <span className="stat-unit-val">{stats.multiCorrect}</span>
+          <span className="stat-unit-sub">multi-select MCQs</span>
         </div>
         <div className="stat-unit-sep" />
         <div className="stat-unit">
@@ -389,18 +405,21 @@ export const QuestionsPage = () => {
       <FolderModal
         isOpen={showFolderModal}
         onClose={() => setShowFolderModal(false)}
-        onSave={(name, description) => {
-          if (editingFolder) {
-            updateFolder(editingFolder.id, { name, description });
-            showToast(`Folder "${name}" updated.`, 'success');
-          } else {
-            addFolder(name, description);
-            showToast(`Folder "${name}" created.`, 'success');
+        onSave={async (name) => {
+          try {
+            if (editingFolder) {
+              await updateFolder(editingFolder.id, { name });
+              showToast(`Folder "${name}" updated.`, 'success');
+            } else {
+              await addFolder(name);
+              showToast(`Folder "${name}" created.`, 'success');
+            }
+            setShowFolderModal(false);
+          } catch (error) {
+            showToast(error.message, 'error');
           }
-          setShowFolderModal(false);
         }}
         initialName={editingFolder?.name || ''}
-        initialDescription={editingFolder?.description || ''}
       />
 
       {/* ── Delete Folder Confirmation ──────────────────────────────────── */}
@@ -415,8 +434,7 @@ export const QuestionsPage = () => {
             </div>
             <div className="modal-body-padding">
               <p>
-                Delete folder <strong>"{deleteFolderInfo.name}"</strong>?
-                The questions inside will not be deleted — they will appear in Unassigned Questions.
+                Delete folder <strong>"{deleteFolderInfo.name}"</strong>? Questions linked to another folder will remain there. Move any questions that only belong here before deleting.
               </p>
             </div>
             <div className="modal-footer">
@@ -424,10 +442,15 @@ export const QuestionsPage = () => {
               <Button
                 variant="danger"
                 size="sm"
-                onClick={() => {
-                  deleteFolder(deleteFolderInfo.id);
-                  setDeleteFolderInfo(null);
-                  showToast(`Folder "${deleteFolderInfo.name}" deleted.`, 'info');
+                onClick={async () => {
+                  try {
+                    await deleteFolder(deleteFolderInfo.id);
+                    setDeleteFolderInfo(null);
+                    showToast(`Folder "${deleteFolderInfo.name}" deleted.`, 'info');
+                  } catch (error) {
+                    showToast(error.message, 'error');
+                    setDeleteFolderInfo(null);
+                  }
                 }}
               >
                 Delete Folder
@@ -441,10 +464,14 @@ export const QuestionsPage = () => {
       {addNewQOpen && selectedFolderId && (
         <MCQAuthoringModal
           onClose={() => setAddNewQOpen(false)}
-          onSave={(data) => {
-            addQuestionToFolder(data, selectedFolderId);
-            showToast(`Question "${data.title}" added to folder.`, 'success');
-            setAddNewQOpen(false);
+          onSave={async (data) => {
+            try {
+              await addQuestionToFolder(data, selectedFolderId);
+              showToast('Question added to folder.', 'success');
+              setAddNewQOpen(false);
+            } catch (error) {
+              showToast(error.message, 'error');
+            }
           }}
         />
       )}
@@ -454,10 +481,14 @@ export const QuestionsPage = () => {
         <MCQAuthoringModal
           initialQuestion={editingQuestion}
           onClose={() => setEditingQuestion(null)}
-          onSave={(data) => {
-            updateQuestion(editingQuestion.id, data);
-            showToast(`Question "${data.title}" updated.`, 'success');
-            setEditingQuestion(null);
+          onSave={async (data) => {
+            try {
+              await updateQuestion(editingQuestion.id, data);
+              showToast('Question updated.', 'success');
+              setEditingQuestion(null);
+            } catch (error) {
+              showToast(error.message, 'error');
+            }
           }}
         />
       )}
@@ -470,10 +501,14 @@ export const QuestionsPage = () => {
           allQuestions={questions}
           foldersForQuestion={foldersForQuestion}
           onClose={() => setAddExistingOpen(false)}
-          onAdd={(ids) => {
-            addExistingQuestionsToFolder(ids, selectedFolderId);
-            showToast(`Added ${ids.length} question(s) to folder.`, 'success');
-            setAddExistingOpen(false);
+          onAdd={async (ids) => {
+            try {
+              await addExistingQuestionsToFolder(ids, selectedFolderId);
+              showToast(`Added ${ids.length} question(s) to folder.`, 'success');
+              setAddExistingOpen(false);
+            } catch (error) {
+              showToast(error.message, 'error');
+            }
           }}
         />
       )}
@@ -515,7 +550,7 @@ export const QuestionsPage = () => {
               </button>
             </div>
             <div className="modal-body-padding">
-              <p>Remove this question from the folder? The question will still exist in the repository and can be re-added later.</p>
+              <p>Remove this question from the folder? A question must remain in at least one folder, so add it to another folder first if this is its only one.</p>
             </div>
             <div className="modal-footer">
               <Button variant="secondary" size="sm" onClick={() => setRemoveFolderConfirm(null)}>Cancel</Button>
@@ -536,19 +571,29 @@ export const QuestionsPage = () => {
               </button>
             </div>
             <div className="modal-body-padding import-body">
-              <p className="import-desc">Upload a JSON question file to bulk-import questions into the repository.</p>
-              <div className="import-drop-zone" onClick={() => fileInputRef.current?.click()}>
+              <p className="import-desc">Import four-option MCQs into a folder in your question bank.</p>
+              {!selectedFolderId && (
+                <div className="form-group">
+                  <label htmlFor="import-folder" className="form-label">Destination folder</label>
+                  <select
+                    id="import-folder"
+                    className="toolbar-select"
+                    value={importFolderId}
+                    onChange={(event) => setImportFolderId(event.target.value)}
+                  >
+                    <option value="">Choose a folder</option>
+                    {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
+                  </select>
+                </div>
+              )}
+              <div
+                className="import-drop-zone"
+                onClick={() => (selectedFolderId || importFolderId) && fileInputRef.current?.click()}
+                aria-disabled={!selectedFolderId && !importFolderId}
+              >
                 <UploadIcon size={24} className="import-drop-icon" />
-                <span className="drop-title">Click to upload JSON file</span>
+                <span className="drop-title">{selectedFolderId || importFolderId ? 'Click to upload JSON file' : 'Choose a folder before uploading'}</span>
                 <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".json" onChange={handleFileUpload} />
-              </div>
-              <div className="import-template-row">
-                <button
-                  className="import-reset-link"
-                  onClick={() => { resetToDefaults(); setShowImportModal(false); showToast('Reset to defaults.', 'info'); }}
-                >
-                  Reset to default questions
-                </button>
               </div>
             </div>
             <div className="modal-footer">
@@ -578,7 +623,6 @@ const QuestionsTable = ({
         <th style={{ width: '38%' }}>Question</th>
         {showFolderCol && <th style={{ width: '15%' }}>Folder</th>}
         <th style={{ width: '12%' }}>Type</th>
-        <th style={{ width: '10%' }}>Difficulty</th>
         <th style={{ width: '8%' }}>Marks</th>
         <th style={{ width: '12%' }} className="text-right">Actions</th>
       </tr>
@@ -611,11 +655,6 @@ const QuestionsTable = ({
               </span>
             </td>
             <td>
-              <span className={`q-difficulty-pill diff-${q.difficulty?.toLowerCase()}`}>
-                {q.difficulty}
-              </span>
-            </td>
-            <td>
               <div className="q-table-marks">
                 <span className="marks-val">{q.marks} pts</span>
                 {q.negativeMarks > 0 && <span className="neg-marks-val">(-{q.negativeMarks})</span>}
@@ -645,15 +684,13 @@ const QuestionsTable = ({
 const MCQAuthoringModal = ({ initialQuestion = {}, onClose, onSave }) => {
   const isEditing = !!initialQuestion.id;
 
-  const [title, setTitle] = useState(initialQuestion.title || '');
   const [statement, setStatement] = useState(initialQuestion.statement || '');
-  const [difficulty, setDifficulty] = useState(initialQuestion.difficulty || 'Medium');
+  const [type, setType] = useState(initialQuestion.type || 'mcq_single');
   const [marks, setMarks] = useState(initialQuestion.marks || 2);
+  const [negativeMarks, setNegativeMarks] = useState(initialQuestion.negativeMarks || 0);
   const [explanation, setExplanation] = useState(initialQuestion.explanation || '');
-  const [subject, setSubject] = useState(initialQuestion.subject || SUBJECT_OPTIONS[0]);
-  const [topic, setTopic] = useState(initialQuestion.topic || '');
   const [options, setOptions] = useState(
-    initialQuestion.options?.length >= 2
+    initialQuestion.options?.length === 4
       ? initialQuestion.options
       : [
           { id: 'opt-1', text: '', isCorrect: true },
@@ -665,49 +702,36 @@ const MCQAuthoringModal = ({ initialQuestion = {}, onClose, onSave }) => {
   const [error, setError] = useState('');
 
   const setCorrect = (id) => {
-    setOptions((prev) => prev.map((o) => ({ ...o, isCorrect: o.id === id })));
+    setOptions((prev) => prev.map((option) => ({
+      ...option,
+      isCorrect: type === 'mcq_multi'
+        ? (option.id === id ? !option.isCorrect : option.isCorrect)
+        : option.id === id,
+    })));
   };
 
   const updateOptionText = (id, text) => {
     setOptions((prev) => prev.map((o) => (o.id === id ? { ...o, text } : o)));
   };
 
-  const addOption = () => {
-    setOptions((prev) => [
-      ...prev,
-      { id: `opt-${Date.now()}`, text: '', isCorrect: false },
-    ]);
-  };
-
-  const removeOption = (id) => {
-    if (options.length <= 2) { setError('At least 2 options are required.'); return; }
-    const remaining = options.filter((o) => o.id !== id);
-    // If we removed the correct answer, default to first
-    if (!remaining.some((o) => o.isCorrect)) {
-      remaining[0].isCorrect = true;
-    }
-    setOptions(remaining);
-  };
-
   const handleSave = () => {
     setError('');
-    if (!title.trim()) { setError('Question title is required.'); return; }
     if (!statement.trim()) { setError('Question text/statement is required.'); return; }
     if (options.some((o) => !o.text.trim())) { setError('All option fields must be filled in.'); return; }
-    if (!options.some((o) => o.isCorrect)) { setError('Select the correct answer.'); return; }
+    const correctCount = options.filter((option) => option.isCorrect).length;
+    if (type === 'mcq_single' && correctCount !== 1) { setError('Select exactly one correct answer.'); return; }
+    if (type === 'mcq_multi' && correctCount < 2) { setError('Select at least two correct answers.'); return; }
     if (!marks || isNaN(marks) || Number(marks) <= 0) { setError('Marks must be a positive number.'); return; }
+    if (Number(negativeMarks) < 0 || !Number.isFinite(Number(negativeMarks))) { setError('Negative marks cannot be below zero.'); return; }
 
     onSave({
-      title: title.trim(),
       statement: statement.trim(),
-      type: 'mcq_single', // extensible: change to mcq_multi when needed
-      difficulty,
+      title: statement.trim(),
+      type,
       marks: Number(marks),
-      negativeMarks: 0,
+      negativeMarks: Number(negativeMarks),
       options,
       explanation: explanation.trim(),
-      subject,
-      topic: topic.trim(),
     });
   };
 
@@ -722,30 +746,13 @@ const MCQAuthoringModal = ({ initialQuestion = {}, onClose, onSave }) => {
         <div className="authoring-body">
           {error && <div className="auth-form-error">{error}</div>}
 
-          {/* Type indicator (locked to MCQ for now) */}
+          {/* The current database schema stores MCQ questions. */}
           <div className="form-row">
             <label className="form-label">Question Type</label>
-            <select className="toolbar-select" disabled value="mcq_single">
+            <select className="toolbar-select" value={type} onChange={(event) => setType(event.target.value)}>
               <option value="mcq_single">MCQ – Multiple Choice (Single Correct)</option>
+              <option value="mcq_multi">MCQ – Multiple Choice (Multiple Correct)</option>
             </select>
-          </div>
-
-          <div className="form-row">
-            <label className="form-label">Title <span className="req">*</span></label>
-            <input className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Short descriptive title" />
-          </div>
-
-          <div className="form-row-two">
-            <div className="form-row">
-              <label className="form-label">Subject</label>
-              <select className="toolbar-select" value={subject} onChange={(e) => setSubject(e.target.value)}>
-                {SUBJECT_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="form-row">
-              <label className="form-label">Topic</label>
-              <input className="form-input" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. Sorting & Recurrence" />
-            </div>
           </div>
 
           <div className="form-row">
@@ -755,16 +762,16 @@ const MCQAuthoringModal = ({ initialQuestion = {}, onClose, onSave }) => {
 
           {/* Options */}
           <div className="form-row">
-            <label className="form-label">Options <span className="req">*</span> <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>— select the correct answer</span></label>
+            <label className="form-label">Four Options <span className="req">*</span> <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 400 }}>— select {type === 'mcq_single' ? 'one correct answer' : 'all correct answers'}</span></label>
             <div className="options-list">
               {options.map((opt, idx) => (
                 <div key={opt.id} className="option-row">
                   <input
-                    type="radio"
-                    name="correct-option"
+                    type={type === 'mcq_single' ? 'radio' : 'checkbox'}
+                    name={`correct-option-${isEditing ? initialQuestion.id : 'new'}`}
                     checked={opt.isCorrect}
                     onChange={() => setCorrect(opt.id)}
-                    title="Mark as correct answer"
+                    title="Toggle this option as correct"
                     className="option-radio"
                   />
                   <span className="option-label-letter">{String.fromCharCode(65 + idx)}</span>
@@ -774,15 +781,9 @@ const MCQAuthoringModal = ({ initialQuestion = {}, onClose, onSave }) => {
                     onChange={(e) => updateOptionText(opt.id, e.target.value)}
                     placeholder={`Option ${String.fromCharCode(65 + idx)}`}
                   />
-                  {options.length > 2 && (
-                    <button className="option-remove-btn" onClick={() => removeOption(opt.id)} title="Remove option">
-                      <XIcon size={12} />
-                    </button>
-                  )}
                 </div>
               ))}
             </div>
-            <button className="add-option-btn" onClick={addOption}>+ Add Option</button>
           </div>
 
           <div className="form-row-two">
@@ -791,10 +792,8 @@ const MCQAuthoringModal = ({ initialQuestion = {}, onClose, onSave }) => {
               <input className="form-input" type="number" min="1" value={marks} onChange={(e) => setMarks(e.target.value)} />
             </div>
             <div className="form-row">
-              <label className="form-label">Difficulty</label>
-              <select className="toolbar-select" value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
-                {DIFFICULTY_LEVELS.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
+              <label className="form-label">Negative Marks</label>
+              <input className="form-input" type="number" min="0" step="0.25" value={negativeMarks} onChange={(e) => setNegativeMarks(e.target.value)} />
             </div>
           </div>
 
@@ -889,7 +888,6 @@ const AddExistingQuestionsModal = ({
                     <div className="add-existing-info">
                       <span className="add-existing-title">{q.title}</span>
                       <span className="add-existing-meta">
-                        <span className={`q-difficulty-pill diff-${q.difficulty?.toLowerCase()}`}>{q.difficulty}</span>
                         <span>{q.marks} pts</span>
                         <span className={`q-type-badge type-${q.type}`}>{typeLabel(q.type)}</span>
                         {folders.length > 0 && (
@@ -934,10 +932,7 @@ const PreviewModal = ({ question: q, onClose }) => (
           <span className="preview-label">Question Preview</span>
           <h3 className="modal-title">{q.title}</h3>
           <div className="preview-meta-chips">
-            <span className="chip-subject">{q.subject}</span>
-            {q.topic && <><span className="chip-sep">•</span><span className="chip-topic">{q.topic}</span></>}
-            <span className="chip-sep">•</span>
-            <span className={`q-difficulty-pill diff-${q.difficulty?.toLowerCase()}`}>{q.difficulty}</span>
+            <span className={`q-type-badge type-${q.type}`}>{typeLabel(q.type)}</span>
             <span className="chip-sep">•</span>
             <span className="chip-marks">{q.marks} Marks</span>
           </div>

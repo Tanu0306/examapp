@@ -7,34 +7,30 @@ import { XIcon, CheckIcon } from './Icons';
  * Props:
  *   isOpen: boolean – whether the modal is visible
  *   onClose: () => void – close handler
- *   onSave: (name: string, description: string) => void – called when user confirms
+ *   onSave: (name: string) => void – called when user confirms
  *   initialName?: string – pre‑fill for edit mode
- *   initialDescription?: string – pre‑fill for edit mode
  */
 export const FolderModal = ({
   isOpen,
   onClose,
   onSave,
   initialName = '',
-  initialDescription = '',
 }) => {
   const [name, setName] = useState(initialName);
-  const [desc, setDesc] = useState(initialDescription);
   const [error, setError] = useState('');
 
   // Reset fields when the modal opens/closes or initial values change
   useEffect(() => {
     setName(initialName);
-    setDesc(initialDescription);
     setError('');
-  }, [isOpen, initialName, initialDescription]);
+  }, [isOpen, initialName]);
 
   const handleSave = () => {
     if (!name.trim()) {
       setError('Folder name cannot be empty');
       return;
     }
-    onSave(name.trim(), desc.trim());
+    onSave(name.trim());
   };
 
   if (!isOpen) return null;
@@ -67,21 +63,6 @@ export const FolderModal = ({
               placeholder="Enter folder name"
             />
           </div>
-          {initialName && (
-            <div className="form-group">
-              <label htmlFor="folder-desc" style={{ fontWeight: 500 }}>
-                Description (optional)
-              </label>
-              <textarea
-                id="folder-desc"
-                rows={3}
-                style={{ width: '100%', padding: '8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}
-                value={desc}
-                onChange={(e) => setDesc(e.target.value)}
-              />
-            </div>
-          )}
-
         </div>
         <div className="modal-footer">
           <Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>

@@ -14,7 +14,7 @@ import './AuthPage.css';
 
 export const AuthPage = ({ initialMode = 'login' }) => {
   const navigate = useNavigate();
-  const { login, register, quickDemoLogin, isLoading } = useAuth();
+  const { login, register, isLoading } = useAuth();
 
   const [mode, setMode] = useState(initialMode); // 'login' | 'register'
 
@@ -83,11 +83,6 @@ export const AuthPage = ({ initialMode = 'login' }) => {
     } catch (err) {
       setError(err.message || 'Registration failed.');
     }
-  };
-
-  const handleDemoLogin = () => {
-    quickDemoLogin();
-    navigate('/');
   };
 
   return (
@@ -189,19 +184,6 @@ export const AuthPage = ({ initialMode = 'login' }) => {
               Sign In
             </Button>
 
-            <div className="auth-divider">
-              <span>or</span>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="md"
-              className="auth-btn-full"
-              onClick={handleDemoLogin}
-            >
-              ⚡ Quick Demo Sign In
-            </Button>
           </form>
         ) : (
           /* REGISTRATION FORM */

@@ -2,33 +2,10 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
 
-const DEMO_TEACHER = {
-  id: 'tch-8821',
-  fullName: 'Prof. Sarah Jenkins',
-  email: 'sarah.jenkins@university.edu',
-  activeLab: 'Lab 3 (Systems Lab)',
-};
-
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('examlan_teacher_auth');
-      return saved ? JSON.parse(saved) : DEMO_TEACHER;
-    } catch {
-      return null;
-    }
-  });
-
+  const [user, setUser] = useState(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Sync with localStorage
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('examlan_teacher_auth', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('examlan_teacher_auth');
-    }
-  }, [user]);
 
   // Check active session on server mount
   useEffect(() => {
@@ -37,12 +14,15 @@ export const AuthProvider = ({ children }) => {
         const res = await fetch('/api/auth/me', { credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
-          if (data.user) {
-            setUser(data.user);
-          }
+          setUser(data.user || null);
+        } else {
+          setUser(null);
         }
       } catch {
         // Server offline or proxy unavailable
+        setUser(null);
+      } finally {
+        setIsSessionLoading(false);
       }
     };
     verifySession();
@@ -110,21 +90,16 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const quickDemoLogin = () => {
-    setUser(DEMO_TEACHER);
-  };
-
   return (
     <AuthContext.Provider
       value={{
         user,
         isAuthenticated: !!user,
+        isSessionLoading,
         isLoading,
         login,
         register,
         logout,
-        quickDemoLogin,
-        demoTeacher: DEMO_TEACHER,
       }}
     >
       {children}
