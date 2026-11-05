@@ -4,6 +4,8 @@ import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import pool from './conn.js';
 import authRouter from './routers/authRouter.js';
+import questionBankRouter from './routers/questionBankRouter.js';
+import { isAuthenticated } from './middlewares/authMiddleware.js';
 import { notFound, errorHandler } from './middlewares/errorMiddleware.js';
 dotenv.config();
 const app = express();
@@ -51,7 +53,24 @@ app.use(
   })
 );
 
-// Server Health Check
+
+
+// Mount Authentication Router
+app.use('/api/auth', authRouter);
+// Protect every other API endpoint. Public login and registration are handled
+// by authRouter before this middleware; new APIs should be mounted after it.
+app.use('/api', isAuthenticated);
+
+// Folder and question APIs use the signed-in teacher's automatically provisioned bank.
+app.use('/api/question-bank', questionBankRouter);
+
+
+
+
+
+
+
+// Server Health Check is protected along with the rest of the API.
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'online',
@@ -60,9 +79,6 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-
-// Mount Authentication Router
-app.use('/api/auth', authRouter);
 
 // Error Handling Middlewares
 app.use(notFound);

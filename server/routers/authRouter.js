@@ -12,10 +12,13 @@ const router = Router();
 // Public Authentication Endpoints
 router.post('/login', login);
 router.post('/register', register);
-router.post('/logout', logout);
 
-// Protected Profile Endpoints (Session-authenticated)
-router.get('/me', isAuthenticated, getProfile);
-router.get('/profile', isAuthenticated, getProfile);
+// All auth endpoints below this line require a valid teacher session.
+router.use(isAuthenticated);
+
+// Protected Authentication Endpoints
+router.post('/logout', logout);
+router.get('/me', getProfile);
+router.get('/profile', getProfile);
 
 export default router;

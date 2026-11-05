@@ -1,5 +1,6 @@
 import argon2 from 'argon2';
 import pool from '../conn.js';
+import { ensureTeacherQuestionBank } from '../services/questionBankService.js';
 
 /**
  * Teacher Registration Controller
@@ -66,13 +67,14 @@ export const register = async (req, res, next) => {
     );
 
     const newTeacher = insertResult.rows[0];
+    const questionBank = await ensureTeacherQuestionBank(newTeacher.id);
 
     // Initialize session stored in PostgreSQL
     req.session.teacher = {
       id: newTeacher.id,
       fullName: newTeacher.full_name,
       email: newTeacher.email,
-      role: newTeacher.role,
+      questionBank,
     };
 
     return res.status(201).json({
@@ -125,11 +127,14 @@ export const login = async (req, res, next) => {
       });
     }
 
+    const questionBank = await ensureTeacherQuestionBank(teacher.id);
+
     // Set authenticated session in PostgreSQL
     req.session.teacher = {
       id: teacher.id,
       fullName: teacher.full_name,
-      email: teacher.email
+      email: teacher.email,
+      questionBank,
     };
 
     return res.status(200).json({
