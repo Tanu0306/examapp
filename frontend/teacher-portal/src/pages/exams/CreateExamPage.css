@@ -674,6 +674,10 @@
   flex-shrink: 0;
 }
 
+.cep-folder-select {
+  min-width: 170px;
+}
+
 .cep-search-wrap {
   display: flex;
   align-items: center;
@@ -898,6 +902,10 @@
   .cep-bank-dialog,
   .cep-edit-dialog {
     max-width: 100%;
+  }
+
+  .cep-bank-dialog .cep-modal-footer {
+    flex-wrap: wrap;
   }
 
   .cep-qcard-toprow {

@@ -79,9 +79,10 @@ const DateTimePicker = ({ label, value, onChange, required = true }) => (
 
 // ─── Question Bank Modal ──────────────────────────────────────────────────────
 
-const QuestionBankModal = ({ allQuestions, alreadyAddedBankIds, onClose, onAdd }) => {
+const QuestionBankModal = ({ allQuestions, folders, alreadyAddedBankIds, onClose, onAdd }) => {
   const [search,          setSearch]          = useState('');
   const [filterType,      setFilterType]      = useState('');
+  const [folderId,        setFolderId]        = useState('');
   const [selected,        setSelected]        = useState(new Set());
 
   // Only MCQ questions are relevant for Create Exam
@@ -90,9 +91,15 @@ const QuestionBankModal = ({ allQuestions, alreadyAddedBankIds, onClose, onAdd }
     [allQuestions]
   );
 
+  const folderQuestions = useMemo(
+    () => mcqOnly.filter(question => (question.folderIds || []).includes(folderId)),
+    [mcqOnly, folderId]
+  );
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return mcqOnly.filter(question => {
+    return folderQuestions.filter(question => {
+      if (alreadyAddedBankIds.has(question.id)) return false;
       if (filterType       && question.type       !== filterType)       return false;
       if (q &&
         !question.title.toLowerCase().includes(q) &&
@@ -100,7 +107,7 @@ const QuestionBankModal = ({ allQuestions, alreadyAddedBankIds, onClose, onAdd }
       ) return false;
       return true;
     });
-  }, [mcqOnly, search, filterType]);
+  }, [folderQuestions, search, filterType, alreadyAddedBankIds]);
 
   const toggle = (id) => {
     if (alreadyAddedBankIds.has(id)) return;
@@ -112,17 +119,21 @@ const QuestionBankModal = ({ allQuestions, alreadyAddedBankIds, onClose, onAdd }
   };
 
   const selectedMarks = useMemo(
-    () => mcqOnly
+    () => folderQuestions
       .filter(q => selected.has(q.id))
       .reduce((s, q) => s + (Number(q.marks) || 0), 0),
-    [mcqOnly, selected]
+    [folderQuestions, selected]
   );
 
   const handleAdd = () => {
     const toAdd = [...selected]
-      .map(id => mcqOnly.find(q => q.id === id))
+      .map(id => folderQuestions.find(q => q.id === id))
       .filter(Boolean);
     onAdd(toAdd);
+  };
+
+  const handleAddEntireFolder = () => {
+    onAdd(folderQuestions.filter(question => !alreadyAddedBankIds.has(question.id)));
   };
 
   return (
@@ -133,7 +144,7 @@ const QuestionBankModal = ({ allQuestions, alreadyAddedBankIds, onClose, onAdd }
         <div className="cep-modal-header">
           <div className="cep-modal-header-info">
             <h3 className="cep-modal-title">Question Bank</h3>
-            <p className="cep-modal-sub">Select MCQ questions to add to this exam</p>
+            <p className="cep-modal-sub">Import a whole folder or choose individual questions</p>
           </div>
           <button className="cep-modal-close" onClick={onClose} type="button">
             <XIcon size={16} />
@@ -142,6 +153,15 @@ const QuestionBankModal = ({ allQuestions, alreadyAddedBankIds, onClose, onAdd }
 
         {/* Filters */}
         <div className="cep-bank-filters">
+          <select
+            className="cep-filter-select cep-folder-select"
+            value={folderId}
+            onChange={event => { setFolderId(event.target.value); setSelected(new Set()); }}
+            aria-label="Choose question folder"
+          >
+            <option value="">Choose a folder…</option>
+            {folders.map(folder => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
+          </select>
           <div className="cep-search-wrap">
             <SearchIcon size={13} className="cep-search-icon" />
             <input
@@ -164,11 +184,15 @@ const QuestionBankModal = ({ allQuestions, alreadyAddedBankIds, onClose, onAdd }
 
         {/* Question list */}
         <div className="cep-bank-list">
-          {filtered.length === 0 ? (
+          {!folderId ? (
             <div className="cep-bank-empty">
-              {mcqOnly.length === 0
-                ? 'No MCQ questions in your Question Bank yet. Add questions in the Question Bank section first.'
-                : 'No questions match your filters.'}
+              {folders.length === 0 ? 'Create a folder and add questions to your Question Bank first.' : 'Choose a folder to see its questions.'}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="cep-bank-empty">
+              {folderQuestions.length === 0
+                ? 'This folder has no MCQ questions.'
+                : 'No questions available for these filters. Questions already in this exam are excluded.'}
             </div>
           ) : (
             filtered.map(q => {
@@ -208,15 +232,25 @@ const QuestionBankModal = ({ allQuestions, alreadyAddedBankIds, onClose, onAdd }
         {/* Footer */}
         <div className="cep-modal-footer">
           <div className="cep-bank-footer-info">
-            {selected.size > 0
+            {!folderId
+              ? 'Choose a folder to import questions'
+              : selected.size > 0
               ? `${selected.size} selected · ${selectedMarks} pts`
               : `${filtered.length} question${filtered.length !== 1 ? 's' : ''} shown`}
           </div>
           <Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>
           <Button
+            variant="outline"
+            size="sm"
+            disabled={!folderId || folderQuestions.every(question => alreadyAddedBankIds.has(question.id))}
+            onClick={handleAddEntireFolder}
+          >
+            Add Entire Folder ({folderQuestions.filter(question => !alreadyAddedBankIds.has(question.id)).length})
+          </Button>
+          <Button
             variant="primary"
             size="sm"
-            disabled={selected.size === 0}
+            disabled={!folderId || selected.size === 0}
             onClick={handleAdd}
           >
             Add Selected ({selected.size})
@@ -579,7 +613,7 @@ export const CreateExamPage = () => {
   const navigate = useNavigate();
   const { examId } = useParams();
   const isEditingExam = Boolean(examId);
-  const { questions: bankQuestions } = useQuestionBank();
+  const { questions: bankQuestions, folders: bankFolders } = useQuestionBank();
   const { addExam, updateExam, getExam } = useExams();
   const [isLoadingExam, setIsLoadingExam] = useState(isEditingExam);
   const [isSaving, setIsSaving] = useState(false);
@@ -997,6 +1031,7 @@ export const CreateExamPage = () => {
       {showBankModal && (
         <QuestionBankModal
           allQuestions={bankQuestions}
+          folders={bankFolders}
           alreadyAddedBankIds={alreadyAddedBankIds}
           onClose={() => setShowBankModal(false)}
           onAdd={handleBankAdd}

@@ -1,1 +1,7 @@
+# Ignore environment files everywhere in the repository.
 .env
+.env.*
+
+# Keep safe templates available for setup documentation.
+!.env.example
+!.env.*.example
