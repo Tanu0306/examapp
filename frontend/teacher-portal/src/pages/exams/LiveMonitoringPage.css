@@ -10,6 +10,32 @@
   margin-bottom: var(--spacing-4);
 }
 
+.monitoring-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: var(--spacing-4); }
+.monitoring-heading .page-title { margin-bottom: 5px; }
+.monitoring-heading p { color: var(--text-secondary); font-size: var(--font-size-sm); }
+.monitoring-connection { display: inline-flex; align-items: center; gap: 8px; padding: 7px 11px; border: 1px solid var(--border-subtle); border-radius: 999px; color: var(--text-secondary); font-size: var(--font-size-xs); white-space: nowrap; }
+.monitoring-connection i { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+.monitoring-connection.connected i { background: #20a464; box-shadow: 0 0 0 3px #20a46420; }
+.monitoring-connection.reconnecting i { background: #d79a22; }
+.monitoring-connection.connecting i { background: #4f79df; }
+.monitoring-message { margin: 12px 0; color: var(--text-secondary); font-size: var(--font-size-sm); }
+.monitoring-message.error { color: #b43f48; }
+.monitoring-roster { margin-top: var(--spacing-4); border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: var(--bg-surface); overflow: hidden; }
+.monitoring-roster-heading { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border-subtle); }
+.monitoring-roster-heading h3 { margin: 0; color: var(--text-primary); font-size: var(--font-size-md); }
+.monitoring-roster-heading > span { color: var(--text-secondary); font-size: var(--font-size-sm); }
+.monitoring-empty { padding: 30px 18px; color: var(--text-muted); text-align: center; font-size: var(--font-size-sm); }
+.monitoring-table-wrap { overflow-x: auto; }
+.monitoring-table-wrap .students-table { margin-top: 0; }
+.student-presence { display: inline-flex; padding: 4px 8px; border-radius: 999px; background: var(--bg-muted); color: var(--text-secondary); font-size: var(--font-size-xs); text-transform: capitalize; }
+.student-presence.connected { background: #e5f6ed; color: #167344; }
+.student-presence.disconnected { background: #f1f1f3; color: #666b76; }
+
+@media (max-width: 640px) {
+  .monitoring-heading { align-items: flex-start; flex-direction: column; }
+  .monitoring-table-wrap .students-table thead { display: none; }
+}
+
 /* Students table */
 .students-table {
   width: 100%;

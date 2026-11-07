@@ -8,7 +8,7 @@ import { DashboardPage } from '../pages/dashboard/DashboardPage';
 import { QuestionsPage } from '../pages/questions/QuestionsPage';
 import { CreateExamPage } from '../pages/exams/CreateExamPage';
 import { AllExamsPage } from '../pages/exams/AllExamsPage';
-import { LiveMonitoringPage } from '../pages/exams/LiveMonitoringPage';
+import { LiveExamManagerPage } from '../pages/exams/LiveExamManagerPage';
 import { ResultsPage } from '../pages/results/ResultsPage';
 import { StudentRosterPage } from '../pages/roster/StudentRosterPage';
 import { SettingsPage } from '../pages/settings/SettingsPage';
@@ -116,7 +116,8 @@ export const AppRoutes = () => {
           />
 
           {/* Phase 4 – Live Monitoring */}
-          <Route path="monitoring" element={<LiveMonitoringPage />} />
+          <Route path="monitoring" element={<Navigate to="/live-exams" replace />} />
+          <Route path="live-exams" element={<LiveExamManagerPage />} />
 
           {/* Phase 5 – Results */}
           <Route path="results" element={<ResultsPage />} />

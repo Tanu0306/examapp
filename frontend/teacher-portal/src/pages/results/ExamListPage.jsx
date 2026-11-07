@@ -24,7 +24,7 @@ export const ExamListPage = () => {
         <Input label="Search" placeholder="Exam name or subject" value={search} onChange={(e) => setSearch(e.target.value)} />
         <Select
           label="Status"
-          options={[{ value: '', label: 'All' }, { value: 'scheduled', label: 'Scheduled' }, { value: 'running', label: 'Running' }, { value: 'completed', label: 'Completed' }]}
+          options={[{ value: '', label: 'All' }, { value: 'running', label: 'Running' }, { value: 'completed', label: 'Completed' }]}
           value={filterStatus}
           onChange={(v) => setFilterStatus(v)}
         />

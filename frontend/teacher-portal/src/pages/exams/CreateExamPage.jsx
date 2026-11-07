@@ -44,12 +44,6 @@ const TYPE_LABELS = {
 
 const genId    = () => `cep-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 const genOptId = () => `opt-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`;
-const toDateTimeInput = (value) => {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-};
 
 const defaultOptions = () => [
   { id: genOptId(), text: '', isCorrect: true  },
@@ -57,25 +51,6 @@ const defaultOptions = () => [
   { id: genOptId(), text: '', isCorrect: false },
   { id: genOptId(), text: '', isCorrect: false },
 ];
-
-// ─── DateTimePicker ───────────────────────────────────────────────────────────
-
-const DateTimePicker = ({ label, value, onChange, required = true }) => (
-  <div className="form-group">
-    {label && (
-      <label className="form-label">
-        {label}{required && <span className="req">*</span>}
-      </label>
-    )}
-    <input
-      type="datetime-local"
-      className="form-input"
-      value={value}
-      onChange={onChange}
-      required={required}
-    />
-  </div>
-);
 
 // ─── Question Bank Modal ──────────────────────────────────────────────────────
 
@@ -617,13 +592,13 @@ export const CreateExamPage = () => {
   const { addExam, updateExam, getExam } = useExams();
   const [isLoadingExam, setIsLoadingExam] = useState(isEditingExam);
   const [isSaving, setIsSaving] = useState(false);
+  const [publishedLink, setPublishedLink] = useState('');
 
   // ── Exam metadata ──
   const [title,              setTitle]              = useState('');
   const [subject,            setSubject]            = useState('');
   const [course,             setCourse]             = useState('');
   const [instructions,       setInstructions]       = useState('');
-  const [dateTime,           setDateTime]           = useState('');
   const [duration,           setDuration]           = useState(60);
   const [lab,                setLab]                = useState(mockLabs[0].value);
   const [batch,              setBatch]              = useState('');
@@ -643,10 +618,10 @@ export const CreateExamPage = () => {
       .then((exam) => {
         if (cancelled) return;
         setTitle(exam.title || '');
+        if (exam.status === 'published') setPublishedLink(exam.joinUrl || '');
         setSubject(exam.subject || '');
         setCourse(exam.course || '');
         setInstructions(exam.instructions || '');
-        setDateTime(toDateTimeInput(exam.schedule));
         setDuration(Number(exam.duration) || 60);
         setLab(exam.lab || mockLabs[0].value);
         setBatch(exam.batch || '');
@@ -732,7 +707,6 @@ export const CreateExamPage = () => {
   const handleSave = async (publish = false) => {
     if (!title.trim())   { toast.error('Exam title is required');       return; }
     if (!subject.trim()) { toast.error('Subject is required');          return; }
-    if (publish && !dateTime) { toast.error('Date & time are required to publish'); return; }
     if (!Number.isFinite(Number(duration)) || Number(duration) <= 0) {
       toast.error('Duration must be greater than zero.');
       return;
@@ -761,7 +735,6 @@ export const CreateExamPage = () => {
       subject:      subject.trim(),
       course,
       instructions,
-      schedule:     dateTime ? new Date(dateTime).toISOString() : null,
       duration:     Number(duration),
       lab,
       batch,
@@ -773,12 +746,14 @@ export const CreateExamPage = () => {
 
     setIsSaving(true);
     try {
-      if (isEditingExam) await updateExam(examId, payload);
-      else await addExam(payload);
+      const savedExam = isEditingExam
+        ? await updateExam(examId, payload)
+        : await addExam(payload);
+      if (publish) setPublishedLink(savedExam.joinUrl || '');
       toast.success(isEditingExam
         ? (publish ? 'Exam changes published.' : 'Draft changes saved.')
         : (publish ? 'Exam published!' : 'Draft saved to the database.'));
-      setTimeout(() => navigate('/exams'), 800);
+      if (!publish) setTimeout(() => navigate('/exams'), 800);
     } catch (requestError) {
       toast.error(requestError.message || 'Unable to save this exam.');
     } finally {
@@ -795,6 +770,24 @@ export const CreateExamPage = () => {
   return (
     <div className="create-exam-page">
       <h2 className="page-title">{isEditingExam ? 'Edit Examination' : 'Create New Exam'}</h2>
+
+      {publishedLink && (
+        <section className="cep-published-link" aria-live="polite">
+          <div>
+            <strong>Student link is ready</strong>
+            <p>Share this link with students to open the exam details page.</p>
+            <a href={publishedLink} target="_blank" rel="noreferrer">{publishedLink}</a>
+          </div>
+          <Button variant="primary" size="sm" onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(publishedLink);
+              toast.success('Student link copied.');
+            } catch {
+              toast.error('Could not copy the link. Select and copy it instead.');
+            }
+          }}>Copy Link</Button>
+        </section>
+      )}
 
       {/* ── Exam Details ── */}
       <section className="cep-section">
@@ -820,16 +813,11 @@ export const CreateExamPage = () => {
         </div>
       </section>
 
-      {/* ── Schedule ── */}
+      {/* ── Exam duration ── */}
       <section className="cep-section">
-        <h3 className="cep-section-title">Schedule</h3>
+        <h3 className="cep-section-title">Exam Duration</h3>
+        <p className="cep-section-description">Each student gets this full duration starting when their questions finish loading.</p>
         <div className="cep-fields-grid">
-          <DateTimePicker
-            label="Date & Time"
-            value={dateTime}
-            onChange={e => setDateTime(e.target.value)}
-            required={false}
-          />
           <Input
             label="Duration (minutes)"
             type="number"

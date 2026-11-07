@@ -16,7 +16,6 @@ import {
 import {
   MOCK_SYSTEM_METRICS,
   MOCK_ONGOING_EXAMS,
-  MOCK_UPCOMING_EXAMS,
   MOCK_RECENT_RESULTS,
 } from '../../data/mockData';
 import './DashboardPage.css';
@@ -316,7 +315,7 @@ export const DashboardPage = () => {
               size="sm"
               onClick={() => navigate('/exams')}
             >
-              View Scheduled Examinations
+              View Examinations
             </Button>
           </div>
         )}
@@ -324,68 +323,27 @@ export const DashboardPage = () => {
 
       {/* 4. Balanced Two-Column Section: Upcoming Exams & Recent Results */}
       <div className="dashboard-split-grid">
-        {/* Left Column: Upcoming Examinations */}
-        <section className="dashboard-split-col" aria-label="Upcoming Examinations">
+        {/* Left Column: Exams ready for the proctor */}
+        <section className="dashboard-split-col" aria-label="Exams ready to start">
           <div className="split-header">
             <div>
-              <h2 className="split-title">Upcoming Examinations</h2>
-              <span className="split-subtitle">Scheduled computer laboratory assessments</span>
+              <h2 className="split-title">Ready when you are</h2>
+              <span className="split-subtitle">Start a published exam whenever your students are ready.</span>
             </div>
             <button
               type="button"
               className="split-header-link"
               onClick={() => navigate('/exams')}
             >
-              View all &rarr;
+              View exams &rarr;
             </button>
           </div>
-
-          {MOCK_UPCOMING_EXAMS.length > 0 ? (
-            <div className="upcoming-flat-list">
-              {MOCK_UPCOMING_EXAMS.map((exam) => (
-                <div key={exam.id} className="upcoming-flat-row">
-                  <div className="upcoming-date-box">
-                    <span className="date-main">{exam.date}</span>
-                    <span className="date-time">{exam.time.split('-')[0].trim()}</span>
-                  </div>
-
-                  <div className="upcoming-info-box">
-                    <div className="upcoming-title-line">
-                      <h4 className="upcoming-name">{exam.title}</h4>
-                      <span className="type-badge-subtle">{exam.type}</span>
-                    </div>
-                    <div className="upcoming-details-line">
-                      <span>{exam.format}</span>
-                      <span className="meta-sep">&bull;</span>
-                      <span>{exam.enrolledStudents} Candidates</span>
-                      <span className="meta-sep">&bull;</span>
-                      <span>{exam.labRoom}</span>
-                    </div>
-                  </div>
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate('/exams')}
-                  >
-                    Details
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="empty-flat-block">
-              <p className="empty-text">No upcoming examinations scheduled.</p>
-              <Button
-                variant="outline"
-                size="sm"
-                icon={PlusCircleIcon}
-                onClick={() => navigate('/exams/create')}
-              >
-                Schedule Examination
-              </Button>
-            </div>
-          )}
+          <div className="empty-flat-block">
+            <p className="empty-text">Publishing creates the student link. The exam timer starts separately for each student after their questions load.</p>
+            <Button variant="primary" size="sm" icon={MonitoringIcon} onClick={() => navigate('/live-exams')}>
+              Open Live Exam Manager
+            </Button>
+          </div>
         </section>
 
         {/* Right Column: Recent Examination Results */}

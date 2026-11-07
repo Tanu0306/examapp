@@ -72,14 +72,6 @@ export const Header = ({ isSidebarCollapsed, onToggleSidebar }) => {
       time: '8m ago',
       unread: true,
     },
-    {
-      id: 3,
-      type: 'exam',
-      title: 'Upcoming Assessment Scheduled',
-      desc: 'CS301 Algorithm Analysis starts in 35 minutes.',
-      time: '22m ago',
-      unread: false,
-    },
   ];
 
   return (

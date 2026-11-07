@@ -24,7 +24,7 @@ const NAV_ITEMS = [
   { label: 'Question Bank', path: '/questions', icon: QuestionsIcon, badge: 'Phase 2' },
   { label: 'Create Exam', path: '/exams/create', icon: PlusCircleIcon, badge: 'New' },
   { label: 'All Examinations', path: '/exams', icon: ExamIcon },
-  { label: 'Live Monitoring', path: '/monitoring', icon: MonitoringIcon, livePulse: true },
+  { label: 'Live Exam Manager', path: '/live-exams', icon: MonitoringIcon, livePulse: true },
 
   { label: 'Results & Reports', path: '/results', icon: ResultsIcon },
   { label: 'Student Roster', path: '/students', icon: StudentsIcon },

@@ -7,12 +7,6 @@ import { useExams } from '../../context/ExamContext';
 import { toast } from '../../utils/toast';
 import './AllExamsPage.css';
 
-const formatSchedule = (schedule) => {
-  if (!schedule) return '--';
-  const date = new Date(schedule);
-  return Number.isNaN(date.getTime()) ? '--' : date.toLocaleString();
-};
-
 export const AllExamsPage = () => {
   const navigate = useNavigate();
   const { exams, isLoading, error, deleteExam } = useExams();
@@ -74,7 +68,7 @@ export const AllExamsPage = () => {
             <tr>
               <th>Title</th>
               <th>Status</th>
-              <th>Scheduled</th>
+              <th>Duration</th>
               <th>Questions</th>
               <th>Actions</th>
             </tr>
@@ -84,7 +78,7 @@ export const AllExamsPage = () => {
               <tr key={exam.id}>
                 <td>{exam.title}</td>
                 <td>{exam.status}</td>
-                <td>{formatSchedule(exam.schedule)}</td>
+                <td>{exam.duration} minutes</td>
                 <td>{exam.questionCount ?? exam.questions?.length ?? 0}</td>
                 <td className="action-cell">
                   <Button
