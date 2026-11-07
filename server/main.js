@@ -1,4 +1,5 @@
 import express from 'express';
+import { createServer } from 'node:http';
 import dotenv from 'dotenv';
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
@@ -6,10 +7,13 @@ import pool from './conn.js';
 import authRouter from './routers/authRouter.js';
 import examRouter from './routers/examRouter.js';
 import questionBankRouter from './routers/questionBankRouter.js';
+import studentExamRouter from './routers/studentExamRouter.js';
 import { isAuthenticated } from './middlewares/authMiddleware.js';
 import { notFound, errorHandler } from './middlewares/errorMiddleware.js';
+import { createSocketServer } from './realtime/socketServer.js';
 dotenv.config();
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
 const PgSession = connectPgSimple(session);
 
@@ -35,8 +39,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Express Session configuration backed by PostgreSQL
-app.use(
-  session({
+const sessionMiddleware = session({
     store: new PgSession({
       pool: pool,
       tableName: 'session',
@@ -51,13 +54,14 @@ app.use(
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
     },
-  })
-);
-
-
+  });
+app.use(sessionMiddleware);
+createSocketServer(httpServer, sessionMiddleware);
 
 // Mount Authentication Router
 app.use('/api/auth', authRouter);
+// Exam links are public so students can open them without a teacher account.
+app.use('/api/student/exams', studentExamRouter);
 // Protect every other API endpoint. Public login and registration are handled
 // by authRouter before this middleware; new APIs should be mounted after it.
 app.use('/api', isAuthenticated);
@@ -87,7 +91,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Start Server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`[ExamLAN Server] Master Node running on port ${PORT}`);
   console.log(`[ExamLAN Server] Auth endpoints mounted at http://localhost:${PORT}/api/auth`);
 });

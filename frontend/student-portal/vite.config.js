@@ -5,8 +5,20 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: {
-
+    host: '0.0.0.0',
     port: 5174,
-    strictPort: true
+    strictPort: true,
+    allowedHosts: ['.trycloudflare.com'],
+    proxy: {
+      '/api/student': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/socket.io': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        ws: true,
+      },
+    },
   }
 })

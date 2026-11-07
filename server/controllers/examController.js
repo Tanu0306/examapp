@@ -1,4 +1,9 @@
 import pool from '../conn.js';
+import { randomBytes } from 'node:crypto';
+import { refreshExamQuestions } from '../realtime/socketServer.js';
+
+const makeJoinCode = () => randomBytes(9).toString('base64url');
+const studentPortalUrl = () => (process.env.STUDENT_PORTAL_URL || 'http://localhost:5174').replace(/\/$/, '');
 
 const validStatuses = new Set(['draft', 'published']);
 const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
@@ -13,9 +18,6 @@ const validateExam = (exam) => {
     return 'Duration must be a positive number of minutes.';
   }
   if (!validStatuses.has(exam.status)) return 'Status must be draft or published.';
-  if (exam.status === 'published' && !exam.schedule) {
-    return 'A scheduled date and time are required before publishing.';
-  }
   if (!Array.isArray(exam.questions)) return 'Questions must be provided as an array.';
   if (exam.status === 'published' && exam.questions.length === 0) {
     return 'Add at least one question before publishing.';
@@ -36,14 +38,38 @@ const validateExam = (exam) => {
 };
 
 const persistQuestions = async (client, examId, questions) => {
-  await client.query('DELETE FROM exam_questions WHERE exam_id = $1', [examId]);
+  const existingResult = await client.query(
+    'SELECT id, question_data FROM exam_questions WHERE exam_id = $1',
+    [examId]
+  );
+  const existingByKey = new Map(existingResult.rows.map((row) => [
+    row.question_data?._examId || row.question_data?.id,
+    row,
+  ]));
+  const retainedIds = new Set();
   for (const [index, question] of questions.entries()) {
     const sourceQuestionId = isUuid(question._bankQuestionId) ? question._bankQuestionId : null;
-    await client.query(
-      `INSERT INTO exam_questions (exam_id, position, source_question_id, question_data)
-       VALUES ($1, $2, $3, $4)`,
-      [examId, index + 1, sourceQuestionId, JSON.stringify(question)]
-    );
+    const stableKey = question._examId || question.id;
+    const existing = stableKey ? existingByKey.get(stableKey) : null;
+    if (existing) {
+      retainedIds.add(existing.id);
+      await client.query(
+        `UPDATE exam_questions
+         SET position = $1, source_question_id = $2, question_data = $3
+         WHERE id = $4`,
+        [index + 1, sourceQuestionId, JSON.stringify(question), existing.id]
+      );
+    } else {
+      await client.query(
+        `INSERT INTO exam_questions (exam_id, position, source_question_id, question_data)
+         VALUES ($1, $2, $3, $4)`,
+        [examId, index + 1, sourceQuestionId, JSON.stringify(question)]
+      );
+    }
+  }
+  const removedIds = existingResult.rows.filter((row) => !retainedIds.has(row.id)).map((row) => row.id);
+  if (removedIds.length) {
+    await client.query('DELETE FROM exam_questions WHERE id = ANY($1::uuid[])', [removedIds]);
   }
 };
 
@@ -55,7 +81,6 @@ const examFromRow = (row) => {
     subject: row.subject,
     course: row.course,
     instructions: row.instructions,
-    schedule: row.scheduled_at,
     duration: row.duration,
     lab: row.lab || (row.lab_id == null ? '' : String(row.lab_id)),
     batch: row.batch,
@@ -65,6 +90,9 @@ const examFromRow = (row) => {
     },
     totalMarks: Number(row.total_marks),
     status: row.status,
+    joinUrl: row.status === 'published' && row.join_code
+      ? `${studentPortalUrl()}/join/${row.join_code}`
+      : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     questions,
@@ -119,8 +147,8 @@ export const createExam = async (req, res, next) => {
     const result = await client.query(
       `INSERT INTO exams (
          created_by, title, subject, course, instructions, scheduled_at,
-         duration, lab, batch, allow_tab_switch, enable_audio_monitor, total_marks, status
-       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         duration, lab, batch, allow_tab_switch, enable_audio_monitor, total_marks, status, join_code
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
        RETURNING *`,
       [
         req.user.id,
@@ -128,7 +156,7 @@ export const createExam = async (req, res, next) => {
         req.body.subject.trim(),
         req.body.course || null,
         req.body.instructions || null,
-        req.body.schedule || null,
+        null,
         Number(req.body.duration),
         req.body.lab || '',
         req.body.batch || '',
@@ -136,6 +164,7 @@ export const createExam = async (req, res, next) => {
         Boolean(req.body.security?.enableAudioMonitor),
         Number(req.body.totalMarks || 0),
         req.body.status,
+        req.body.status === 'published' ? makeJoinCode() : null,
       ]
     );
     await persistQuestions(client, result.rows[0].id, req.body.questions);
@@ -158,12 +187,25 @@ export const updateExam = async (req, res, next) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    if (req.body.status !== 'published') {
+      const live = await client.query(
+        `SELECT 1 FROM exam_live_sessions
+         WHERE exam_id = $1 AND status = 'live'`,
+        [examId]
+      );
+      if (live.rowCount) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ success: false, message: 'A live exam must stay published while students are taking it.' });
+      }
+    }
     const result = await client.query(
       `UPDATE exams
        SET title = $1, subject = $2, course = $3, instructions = $4,
            scheduled_at = $5, duration = $6, lab = $7, batch = $8,
            allow_tab_switch = $9, enable_audio_monitor = $10,
-           total_marks = $11, status = $12, updated_at = NOW()
+           total_marks = $11, status = $12,
+           join_code = CASE WHEN $15::text IS NOT NULL THEN COALESCE(join_code, $15) ELSE NULL END,
+           updated_at = NOW()
        WHERE id = $13 AND created_by = $14
        RETURNING *`,
       [
@@ -171,7 +213,7 @@ export const updateExam = async (req, res, next) => {
         req.body.subject.trim(),
         req.body.course || null,
         req.body.instructions || null,
-        req.body.schedule || null,
+        null,
         Number(req.body.duration),
         req.body.lab || '',
         req.body.batch || '',
@@ -181,6 +223,7 @@ export const updateExam = async (req, res, next) => {
         req.body.status,
         examId,
         req.user.id,
+        req.body.status === 'published' ? makeJoinCode() : null,
       ]
     );
     if (result.rowCount === 0) {
@@ -189,6 +232,7 @@ export const updateExam = async (req, res, next) => {
     }
     await persistQuestions(client, examId, req.body.questions);
     await client.query('COMMIT');
+    await refreshExamQuestions(examId);
     return res.json({ success: true, exam: examFromRow({ ...result.rows[0], questions: req.body.questions }) });
   } catch (error) {
     try { await client.query('ROLLBACK'); } catch {}
@@ -202,6 +246,15 @@ export const deleteExam = async (req, res, next) => {
   try {
     const { examId } = req.params;
     if (!isExamId(examId)) return res.status(400).json({ success: false, message: 'Invalid exam ID.' });
+    const live = await pool.query(
+      `SELECT 1 FROM exam_live_sessions s
+       JOIN exams e ON e.id = s.exam_id
+       WHERE s.exam_id = $1 AND e.created_by = $2 AND s.status = 'live'`,
+      [examId, req.user.id]
+    );
+    if (live.rowCount) {
+      return res.status(409).json({ success: false, message: 'Finish the live exam before deleting it.' });
+    }
     const result = await pool.query(
       'DELETE FROM exams WHERE id = $1 AND created_by = $2 RETURNING id',
       [examId, req.user.id]
